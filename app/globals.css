@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+:root {
+  --maaak-obsidian: #14110e;
+  --maaak-charcoal: #1f1a16;
+  --maaak-gold: #c59b5f;
+  --maaak-gold-light: #dfbe8a;
+  --maaak-gold-dark: #9c743c;
+  --maaak-cream: #faf6f0;
+  --maaak-sand: #f2ebe0;
+  --maaak-border: #e5dec9;
+  --maaak-ink: #000000;
+  --maaak-muted: #665c4e;
+  --font-sans: var(--font-poppins), "Poppins", system-ui, sans-serif;
+  --font-serif: var(--font-poppins), "Poppins", sans-serif;
+}
+
+html,
+body {
+  background-color: var(--maaak-cream);
+  color: #000000;
+  font-family: var(--font-poppins), "Poppins", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+.font-serif {
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+}
+
+/* Deterrents against copying, selecting, and dragging images */
+.maaak-protected {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.maaak-protected input,
+.maaak-protected textarea,
+.maaak-protected select {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+.maaak-protected img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+
+@media print {
+  body {
+    display: none !important;
+  }
+}

@@ -1,0 +1,278 @@
+{
+  "info": {
+    "name": "MAAAK Matrimony Platform API v1 (Next.js & Flutter)",
+    "_postman_id": "a7e9b5c3-2d4f-4a1e-9c8b-1234567890ab",
+    "description": "Complete versioned REST API collection for the MAAAK Matrimony Platform (/api/v1). Supports Bearer token authentication for Flutter Mobile and Web clients.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "adminApiKey",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "POST /auth/register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Zayd\",\n  \"lastName\": \"Al-Harith\",\n  \"username\": \"zayd2026\",\n  \"gender\": \"Male\",\n  \"dob\": \"1993-05-15\",\n  \"email\": \"zayd@maaak.co.uk\",\n  \"mobileNumber\": \"+447700900555\",\n  \"password\": \"StrongPass#2026\",\n  \"city\": \"London\",\n  \"postcode\": \"SW1A 1AA\",\n  \"selectedPlan\": \"premium\",\n  \"acceptTerms\": true,\n  \"acceptSubscriptionDisclosure\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"aisha@maaak.co.uk\",\n  \"password\": \"Member#2026!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /auth/me",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "POST /auth/refresh",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /auth/verify-email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/verify-email",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /auth/verify-mobile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/verify-mobile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /auth/logout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Profiles & Excel Questions",
+      "item": [
+        {
+          "name": "GET /profiles/me",
+          "request": { "method": "GET", "url": "{{baseUrl}}/profiles/me" }
+        },
+        {
+          "name": "PATCH /profiles/me",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/profiles/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"short_bio\": \"Family-oriented professional seeking marriage built on faith and mercy.\",\n  \"publish\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /profiles/completion",
+          "request": { "method": "GET", "url": "{{baseUrl}}/profiles/completion" }
+        },
+        {
+          "name": "GET /profile-questions",
+          "request": { "method": "GET", "url": "{{baseUrl}}/profile-questions" }
+        },
+        {
+          "name": "GET /profile-questions/categories",
+          "request": { "method": "GET", "url": "{{baseUrl}}/profile-questions/categories" }
+        },
+        {
+          "name": "PUT /profiles/me/answers",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/profiles/me/answers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profileUpdates\": {\n    \"relationship_status\": \"Divorced\",\n    \"religion\": \"Muslim/Islam\"\n  }\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Preferences & Dealbreakers",
+      "item": [
+        {
+          "name": "GET /preferences",
+          "request": { "method": "GET", "url": "{{baseUrl}}/preferences" }
+        },
+        {
+          "name": "PUT /preferences",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/preferences",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferred_age_min\": 28,\n  \"preferred_age_max\": 42,\n  \"preferred_religions\": [\"Muslim/Islam\"],\n  \"preferred_smoking\": \"Never\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /dealbreakers",
+          "request": { "method": "GET", "url": "{{baseUrl}}/dealbreakers" }
+        },
+        {
+          "name": "PUT /dealbreakers",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/dealbreakers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dealbreakers\": [\n    { \"dealbreaker_code\": \"religion\", \"required_value\": [\"Muslim/Islam\"] },\n    { \"dealbreaker_code\": \"smoking\", \"required_value\": \"Never\" },\n    { \"dealbreaker_code\": \"alcohol\", \"required_value\": \"Never\" }\n  ]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Matching (Gale-Shapley) & Discovery",
+      "item": [
+        {
+          "name": "GET /matches/recommended",
+          "request": { "method": "GET", "url": "{{baseUrl}}/matches/recommended" }
+        },
+        {
+          "name": "GET /matches",
+          "request": { "method": "GET", "url": "{{baseUrl}}/matches" }
+        },
+        {
+          "name": "POST /matches/recalculate",
+          "request": { "method": "POST", "url": "{{baseUrl}}/matches/recalculate" }
+        },
+        {
+          "name": "GET /explore",
+          "request": { "method": "GET", "url": "{{baseUrl}}/explore" }
+        },
+        {
+          "name": "POST /explore/filter",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/explore/filter",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"minAge\": 25,\n  \"maxAge\": 45,\n  \"religion\": \"Muslim/Islam\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Requests, Messaging (Max 3 Active Chats) & Agora Calls",
+      "item": [
+        {
+          "name": "GET /requests/received",
+          "request": { "method": "GET", "url": "{{baseUrl}}/requests/received" }
+        },
+        {
+          "name": "GET /requests/sent",
+          "request": { "method": "GET", "url": "{{baseUrl}}/requests/sent" }
+        },
+        {
+          "name": "GET /conversations",
+          "request": { "method": "GET", "url": "{{baseUrl}}/conversations" }
+        },
+        {
+          "name": "GET /calls",
+          "request": { "method": "GET", "url": "{{baseUrl}}/calls" }
+        }
+      ]
+    },
+    {
+      "name": "6. Verification, Subscriptions & Admin",
+      "item": [
+        {
+          "name": "GET /verification/status",
+          "request": { "method": "GET", "url": "{{baseUrl}}/verification/status" }
+        },
+        {
+          "name": "GET /subscriptions/plans",
+          "request": { "method": "GET", "url": "{{baseUrl}}/subscriptions/plans" }
+        },
+        {
+          "name": "GET /subscriptions/current",
+          "request": { "method": "GET", "url": "{{baseUrl}}/subscriptions/current" }
+        },
+        {
+          "name": "GET /admin/dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Admin-Api-Key", "value": "{{adminApiKey}}" }],
+            "url": "{{baseUrl}}/admin/dashboard"
+          }
+        }
+      ]
+    }
+  ]
+}
