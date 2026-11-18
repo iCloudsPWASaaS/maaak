@@ -172,21 +172,6 @@ export default function PreferencesAndDealbreakersPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl border border-[#C59B5F]/40 bg-[#14110E] p-7 text-[#FAF6F0]">
-        <span className="text-xs font-semibold uppercase tracking-widest text-[#DFBE8A]">
-          Compatibility Engine Controls
-        </span>
-        <h1 className="mt-1 font-serif text-3xl font-semibold text-white">
-          WHAT I WANT (Preferences) &amp; WHAT I REQUIRE (Up to 5 Dealbreakers)
-        </h1>
-        <p className="mt-2 max-w-3xl text-xs leading-relaxed text-white/75">
-          <strong>Preferences</strong> guide your 0–100% compatibility score
-          (selecting &ldquo;No preference&rdquo; never reduces your score).{" "}
-          <strong>Dealbreakers (Max 5)</strong> are strict pass/fail eligibility
-          filters that override even a 94% compatibility score.
-        </p>
-      </div>
-
       {message && (
         <div className="flex items-center gap-2 rounded-2xl border border-emerald-600/30 bg-emerald-50 p-4 text-xs font-semibold text-emerald-900">
           <CheckCircle2 className="h-4 w-4 text-emerald-700" />
@@ -201,12 +186,12 @@ export default function PreferencesAndDealbreakersPage() {
         </div>
       )}
 
-      {/* Part B: WHAT I WANT (Preferences from Compatibility-Preference worksheet) */}
+      {/* WHAT I WANT (Preferences from Compatibility-Preference worksheet) */}
       <div className="rounded-3xl border border-[#E5DEC9] bg-white p-7 shadow-xs">
         <div className="flex items-center gap-2.5 border-b border-[#E5DEC9] pb-4">
           <SlidersHorizontal className="h-5 w-5 text-[#9C743C]" />
           <h2 className="font-serif text-2xl font-semibold text-[#1A1612]">
-            Part B: WHAT I WANT — Ideal Partner Preferences
+            WHAT I WANT — Ideal Partner Preferences
           </h2>
         </div>
 
@@ -495,12 +480,12 @@ export default function PreferencesAndDealbreakersPage() {
         </div>
       </div>
 
-      {/* Part C: WHAT I REQUIRE (Dealbreakers Up Front — Max 5) */}
+      {/* WHAT I REQUIRE (Dealbreakers Up Front — Max 5) */}
       <div className="rounded-3xl border border-[#C59B5F] bg-white p-7 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E5DEC9] pb-4">
           <div>
             <h2 className="font-serif text-2xl font-semibold text-[#1A1612]">
-              Part C: WHAT I REQUIRE — Dealbreakers Up Front (Choose up to 5)
+              WHAT I REQUIRE — Dealbreakers Up Front (Choose up to 5)
             </h2>
             <p className="text-xs text-[#665C4E]">
               Anyone who fails your selected dealbreakers (or leaves the field
@@ -560,11 +545,7 @@ export default function PreferencesAndDealbreakersPage() {
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C59B5F] to-[#DFBE8A] px-8 py-3.5 text-xs font-bold text-[#14110E] shadow-lg"
           >
             <Save className="h-4 w-4" />
-            <span>
-              {saving
-                ? "Recalculating Matches..."
-                : "Confirm Preferences & 5 Dealbreakers"}
-            </span>
+            <span>Confirm Preferences</span>
           </button>
         </div>
       </div>

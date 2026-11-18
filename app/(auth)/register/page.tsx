@@ -78,7 +78,7 @@ export default function RegisterPage() {
             <img src="/logo.png" alt="Ma'aak" className="mx-auto h-14 w-auto" />
           </Link>
           <h1 className="mt-4 font-serif text-3xl font-semibold text-white sm:text-4xl">
-            Create Your Ma&apos;aak Account
+            Register
           </h1>
           <p className="mt-1.5 text-sm text-white/70">
             Authoritative Registration Specification • 1 Verified Email &amp; 1
@@ -404,11 +404,7 @@ export default function RegisterPage() {
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#C59B5F] to-[#DFBE8A] py-4 text-xs font-bold text-[#14110E] shadow-xl transition hover:opacity-95 disabled:opacity-50"
           >
             <ShieldCheck className="h-4 w-4" />
-            <span>
-              {loading
-                ? "Creating Your Account..."
-                : "Complete Registration & Start Profile Wizard"}
-            </span>
+            <span>{loading ? "Registering..." : "Register"}</span>
           </button>
 
           <p className="mt-4 text-center text-xs text-white/65">

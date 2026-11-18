@@ -3,13 +3,22 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  BadgeCheck,
+  Bookmark,
+  Compass,
+  Crown,
+  Heart,
+  MapPin,
+  MessageCircle,
+  Puzzle,
+  RefreshCw,
+  Send,
   ShieldCheck,
   Sparkles,
-  Heart,
-  ThumbsUp,
   ThumbsDown,
-  Send,
-  RefreshCw,
+  ThumbsUp,
+  User,
+  Users,
 } from "lucide-react";
 import { WatermarkedPhoto } from "@/components/SecurityProtectionLayer";
 
@@ -26,6 +35,9 @@ interface MatchCardItem {
   religion: string;
   religious_denomination: string;
   relationship_status: string;
+  looking_for_intention?: string | null;
+  country?: string | null;
+  hobbies_interests?: string[];
   has_children: boolean;
   children_count: string;
   short_bio: string;
@@ -38,6 +50,13 @@ interface MatchCardItem {
   };
   my_action?: string | null;
 }
+
+const MOBILE_TABS = [
+  { href: "/explore", label: "Discover", icon: Compass },
+  { href: "/matches", label: "Matches", icon: Heart },
+  { href: "/messages", label: "Messages", icon: MessageCircle },
+  { href: "/profile/wizard", label: "You", icon: User },
+];
 
 export default function RecommendedMatchesPage() {
   const [matches, setMatches] = useState<MatchCardItem[]>([]);
@@ -94,14 +113,191 @@ export default function RecommendedMatchesPage() {
     setTimeout(() => setToast(null), 4000);
   }
 
+  const mobileScore = topMatch?.compatibility?.mutual_score ?? 92;
+  const mobileIntention = topMatch?.looking_for_intention || "Marriage";
+  const mobileParenthood = topMatch?.has_children
+    ? `Single parent (${topMatch.children_count || "1"} ${topMatch.children_count === "1" || !topMatch.children_count ? "child" : "children"})`
+    : "No children";
+  const mobileInterests = topMatch?.hobbies_interests?.length
+    ? topMatch.hobbies_interests.slice(0, 4)
+    : ["Faith & Values", "Family Oriented", "Outdoors", "Learning"];
+
   return (
-    <div className="space-y-8">
+    <div>
       {toast && (
         <div className="fixed right-6 bottom-20 z-50 rounded-full border border-[#C59B5F] bg-[#14110E] px-5 py-3 text-xs font-semibold text-[#DFBE8A] shadow-xl">
           {toast}
         </div>
       )}
 
+      <div className="-mx-4 space-y-4 bg-[#14110E] px-4 pt-3 pb-6 text-[#FAF6F0] sm:-mx-6 sm:px-6 lg:hidden">
+        <div className="grid grid-cols-4 gap-2">
+          {MOBILE_TABS.map((tab, index) => {
+            const Icon = tab.icon;
+            const active = index === 0;
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-[11px] font-semibold transition ${
+                  active
+                    ? "bg-gradient-to-r from-[#C59B5F] to-[#DFBE8A] text-[#14110E]"
+                    : "border border-white/15 text-white/70"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span>{tab.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {loading ? (
+          <div className="h-[560px] animate-pulse rounded-[2rem] bg-[#1F1A16]" />
+        ) : topMatch ? (
+          <div className="overflow-hidden rounded-[2rem] bg-[#F3E9DC] text-[#1A1612] shadow-2xl">
+            <div className="relative h-[52vh] min-h-[340px] max-h-[460px]">
+              <WatermarkedPhoto
+                src={
+                  topMatch.photos?.[0]?.url ||
+                  "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=900&q=80"
+                }
+                alt={topMatch.first_name}
+                watermarkText={topMatch.photos?.[0]?.watermark || "MA'AAK PROTECTED"}
+                className="h-full w-full"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/25" />
+              <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#C59B5F] to-[#DFBE8A] px-3 py-1.5 text-[11px] font-bold text-[#14110E] shadow">
+                <Crown className="h-3.5 w-3.5" />
+                Premium
+              </div>
+              <button
+                type="button"
+                aria-label="Save profile"
+                onClick={() => {
+                  setToast("Profile saved!");
+                  setTimeout(() => setToast(null), 2500);
+                }}
+                className="absolute top-4 right-4 rounded-full border border-white/30 bg-black/40 p-2.5 text-white backdrop-blur"
+              >
+                <Bookmark className="h-4 w-4" />
+              </button>
+              <div className="absolute right-5 bottom-6 left-5 text-white">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-serif text-3xl font-semibold">
+                    {topMatch.first_name}, {topMatch.age}
+                  </h2>
+                  {topMatch.id_verified && (
+                    <BadgeCheck className="h-5 w-5 text-[#DFBE8A]" />
+                  )}
+                </div>
+                <p className="mt-1 flex items-center gap-1.5 text-xs text-white/85">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {topMatch.city || "London"}, {topMatch.country || "UK"} · within 15 miles
+                </p>
+              </div>
+            </div>
+
+            <div className="relative -mt-8 rounded-t-[2rem] bg-[#F3E9DC] px-5 pt-6 pb-6 shadow-[0_-8px_24px_rgba(0,0,0,0.12)]">
+              <div className="grid grid-cols-3 divide-x divide-[#DCCBB4]">
+                <div className="px-1 text-center">
+                  <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full border border-[#C59B5F]/40 bg-white/70">
+                    <Heart className="h-4 w-4 text-[#9C743C]" />
+                  </div>
+                  <p className="mt-2 text-[9px] font-semibold uppercase tracking-wide text-[#8C6D3F]">
+                    Relationship Intentions
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-semibold text-[#1A1612]">
+                    {mobileIntention}
+                  </p>
+                </div>
+                <div className="px-1 text-center">
+                  <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full border border-[#C59B5F]/40 bg-white/70">
+                    <Users className="h-4 w-4 text-[#9C743C]" />
+                  </div>
+                  <p className="mt-2 text-[9px] font-semibold uppercase tracking-wide text-[#8C6D3F]">
+                    Parenthood
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-semibold text-[#1A1612]">
+                    {mobileParenthood}
+                  </p>
+                </div>
+                <div className="px-1 text-center">
+                  <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full border border-[#C59B5F]/40 bg-white/70">
+                    <Puzzle className="h-4 w-4 text-[#9C743C]" />
+                  </div>
+                  <p className="mt-2 text-[9px] font-semibold uppercase tracking-wide text-[#8C6D3F]">
+                    Compatibility
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-semibold text-[#1A1612]">
+                    High match ({mobileScore}%)
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-5 h-px bg-[#DCCBB4]" />
+
+              <h3 className="font-serif text-lg font-semibold text-[#1A1612]">
+                About Me
+              </h3>
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#5C5346]">
+                {topMatch.short_bio ||
+                  "A thoughtful, faith-centred partner seeking a meaningful marriage."}
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {mobileInterests.map((interest) => (
+                  <span
+                    key={interest}
+                    className="inline-flex items-center gap-1 rounded-full border border-[#C59B5F]/30 bg-[#E8D8C3] px-3 py-1.5 text-[11px] font-medium text-[#6E5229]"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    {interest}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-6 flex items-center justify-center gap-6">
+                <button
+                  type="button"
+                  aria-label="Dislike"
+                  onClick={() => handleAction(topMatch.id, "dislike")}
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[#E5DEC9] bg-white text-[#1A1612] shadow"
+                >
+                  <ThumbsDown className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Like"
+                  onClick={() => handleAction(topMatch.id, "like")}
+                  className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#C59B5F] to-[#DFBE8A] text-white shadow-lg"
+                >
+                  <ThumbsUp className="h-7 w-7" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Send message"
+                  onClick={() => handleSendIntro(topMatch.id, topMatch.first_name)}
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[#E5DEC9] bg-white text-[#1A1612] shadow"
+                >
+                  <Send className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-[2rem] bg-[#F3E9DC] p-8 text-center">
+            <p className="font-serif text-lg font-semibold text-[#1A1612]">
+              No compatible matches yet
+            </p>
+            <p className="mt-1 text-xs text-[#665C4E]">
+              Check back soon as new members join Ma&apos;aak.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="hidden space-y-8 lg:block">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold uppercase tracking-widest text-[#9C743C]">
@@ -334,6 +530,7 @@ export default function RecommendedMatchesPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -63,7 +63,7 @@ export function AdminAccessDenied() {
         href="/login"
         className="mt-5 inline-block rounded-full bg-[#14110E] px-6 py-2.5 text-xs font-semibold text-[#DFBE8A]"
       >
-        Go to Secure Sign In
+        Sign In
       </Link>
     </div>
   );

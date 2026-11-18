@@ -23,7 +23,7 @@ export default async function DiditCallbackPage({
       <main className="flex min-h-screen items-center justify-center bg-[#FAF6F0] px-6">
         <div className="max-w-lg rounded-3xl border border-[#E5DEC9] bg-white p-10 text-center shadow-sm">
           <h1 className="font-serif text-3xl text-[#1A1612]">
-            Sign in to continue
+            Sign In
           </h1>
           <p className="mt-4 text-sm leading-7 text-[#665C4E]">
             Please sign in to view your identity verification status.

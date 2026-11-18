@@ -92,7 +92,7 @@ export default function LoginPage() {
             <img src="/logo.png" alt="Ma'aak" className="mx-auto h-14 w-auto" />
           </Link>
           <h1 className="mt-4 font-serif text-3xl font-semibold text-white">
-            Sign in to Ma&apos;aak
+            Sign In
           </h1>
           <p className="mt-1 text-xs text-white/65">
             Enter your email address or username to access your matrimony
@@ -165,7 +165,7 @@ export default function LoginPage() {
               className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#C59B5F] to-[#DFBE8A] py-3.5 text-xs font-bold text-[#14110E] shadow-lg transition hover:opacity-95 disabled:opacity-50"
             >
               <Lock className="h-3.5 w-3.5" />
-              <span>{loading ? "Signing in..." : "Sign In Securely"}</span>
+              <span>{loading ? "Signing In..." : "Sign In"}</span>
             </button>
           </form>
 
@@ -175,7 +175,7 @@ export default function LoginPage() {
               href="/register"
               className="font-semibold text-[#DFBE8A] hover:underline"
             >
-              Register with your 1st Month Free
+              Register
             </Link>
           </p>
         </div>

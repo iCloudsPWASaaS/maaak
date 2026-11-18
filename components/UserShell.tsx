@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -17,6 +17,8 @@ import {
   Settings,
   LogOut,
   Sparkles,
+  Menu,
+  X,
 } from "lucide-react";
 
 const SIDEBAR_ITEMS = [
@@ -24,11 +26,11 @@ const SIDEBAR_ITEMS = [
   { href: "/matches", label: "Matches", icon: Heart },
   { href: "/explore", label: "Explore & Filter", icon: Sparkles },
   { href: "/requests", label: "Intro Requests", icon: Send },
-  { href: "/messages", label: "Messages (Max 3)", icon: MessageCircle },
+  { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/calls", label: "Voice & Video Calls", icon: PhoneCall },
   { href: "/profile/wizard", label: "My Profile Wizard", icon: User },
-  { href: "/preferences", label: "Preferences & 5 Dealbreakers", icon: SlidersHorizontal },
-  { href: "/verification", label: "ID Verification (Didit)", icon: ShieldCheck },
+  { href: "/preferences", label: "Preferences", icon: SlidersHorizontal },
+  { href: "/verification", label: "ID Verification", icon: ShieldCheck },
   { href: "/subscription", label: "Membership", icon: Crown },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings", label: "Safety & Settings", icon: Settings },
@@ -37,6 +39,19 @@ const SIDEBAR_ITEMS = [
 export function UserShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? "hidden" : "";
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setDrawerOpen(false);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [drawerOpen]);
 
   async function handleLogout() {
     await fetch("/api/v1/auth/logout", { method: "POST" });
@@ -52,11 +67,8 @@ export function UserShell({ children }: { children: React.ReactNode }) {
           <div className="border-b border-white/10 px-7 py-6">
             <Link href="/dashboard" className="inline-block">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="Ma'aak" className="h-10 w-auto" />
+              <img src="/logo.png" alt="Ma'aak" className="h-14 w-auto" />
             </Link>
-            <p className="mt-1.5 text-[11px] text-[#DFBE8A]/80">
-              ME → WHAT I WANT → WHAT I REQUIRE
-            </p>
           </div>
 
           <nav className="mt-4 space-y-1 px-4">
@@ -88,15 +100,6 @@ export function UserShell({ children }: { children: React.ReactNode }) {
 
         {/* Decorative Islamic Arch footer & Logout matching Mock1.png */}
         <div className="relative overflow-hidden border-t border-white/10 p-5">
-          <div className="mb-4 rounded-xl border border-[#C59B5F]/25 bg-[#1F1A16] p-3.5 text-xs">
-            <div className="font-serif font-semibold text-[#DFBE8A]">
-              Privacy &amp; Dignity Active
-            </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-white/65">
-              Screenshot deterrents, watermarking, and 3-chat focus limits are
-              active.
-            </p>
-          </div>
           <button
             type="button"
             onClick={handleLogout}
@@ -110,49 +113,123 @@ export function UserShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col pb-20 lg:pb-0">
-        {/* Top Mobile / Tablet Header */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#E5DEC9] bg-[#14110E] px-4 py-3 text-[#FAF6F0] lg:bg-[#FAF6F0]/90 lg:px-8 lg:py-4 lg:text-[#1A1612] lg:backdrop-blur">
-          <div className="flex items-center gap-3 lg:hidden">
-            <Link href="/dashboard">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="Ma'aak" className="h-8 w-auto" />
-            </Link>
-          </div>
+        {/* Mobile Header: hamburger, Verify ID + notifications */}
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#E5DEC9] bg-[#14110E] px-4 py-3 text-[#FAF6F0] lg:hidden">
+          <button
+            type="button"
+            aria-label="Open menu"
+            onClick={() => setDrawerOpen(true)}
+            className="rounded-lg p-1.5 text-white/85 transition hover:bg-white/10"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
 
-          <div className="hidden lg:block">
-            <span className="text-xs font-semibold uppercase tracking-widest text-[#8C6D3F]">
-              Ma&apos;aak Member Sanctuary
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Link
               href="/verification"
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#C59B5F]/40 bg-[#C59B5F]/15 px-3 py-1.5 text-xs font-semibold text-[#8C6D3F] lg:text-[#6E5229]"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#C59B5F]/40 bg-[#C59B5F]/15 px-3 py-1.5 text-[11px] font-semibold text-[#DFBE8A]"
             >
-              <ShieldCheck className="h-3.5 w-3.5 text-[#C59B5F]" />
+              <ShieldCheck className="h-3.5 w-3.5" />
               <span>Verify ID</span>
             </Link>
             <Link
               href="/notifications"
               aria-label="Notifications"
-              className="rounded-full border border-[#E5DEC9] bg-white p-2 text-[#1A1612] shadow-xs hover:border-[#C59B5F]"
+              className="relative rounded-full border border-white/20 bg-white/5 p-2 text-white/85"
             >
               <Bell className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/profile/wizard"
-              aria-label="My Profile"
-              className="rounded-full border border-[#C59B5F] bg-[#14110E] p-2 text-[#DFBE8A]"
-            >
-              <User className="h-4 w-4" />
+              <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-[#DFBE8A]" />
             </Link>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main
+          className={`mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6 lg:px-8 ${
+            pathname === "/matches"
+              ? "pt-0 pb-20 lg:pt-8 lg:pb-6"
+              : "py-6 pb-20 lg:pb-0"
+          }`}
+        >
           {children}
         </main>
+      </div>
+
+      {/* Mobile slide-out navigation drawer */}
+      <div
+        className={`fixed inset-0 z-50 lg:hidden ${drawerOpen ? "" : "pointer-events-none"}`}
+        aria-hidden={!drawerOpen}
+        inert={!drawerOpen}
+      >
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={() => setDrawerOpen(false)}
+          className={`absolute inset-0 h-full w-full bg-black/60 transition-opacity duration-300 ${
+            drawerOpen ? "opacity-100" : "opacity-0"
+          }`}
+        />
+        <aside
+          className={`relative flex h-full w-[82%] max-w-xs flex-col bg-[#14110E] text-[#FAF6F0] shadow-2xl transition-transform duration-300 ${
+            drawerOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
+            <Link
+              href="/dashboard"
+              onClick={() => setDrawerOpen(false)}
+              className="inline-block"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="Ma'aak" className="h-12 w-auto" />
+            </Link>
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setDrawerOpen(false)}
+              className="rounded-lg p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+            {SIDEBAR_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const active =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setDrawerOpen(false)}
+                  className={`flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-medium transition ${
+                    active
+                      ? "border border-[#C59B5F]/30 bg-[#332A1E] text-[#DFBE8A]"
+                      : "text-white/75 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Icon
+                    className={`h-4 w-4 ${
+                      active ? "text-[#C59B5F]" : "text-white/60"
+                    }`}
+                  />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="border-t border-white/10 p-4">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-4 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </aside>
       </div>
 
       {/* Mobile Bottom Navigation Bar matching Mock1.png & Mock2.png */}

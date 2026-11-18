@@ -9,7 +9,8 @@ import {
   Users,
   Puzzle,
   Send,
-  X,
+  ThumbsDown,
+  ThumbsUp,
   Flag,
   Ban,
   MessageCircle,
@@ -353,10 +354,10 @@ export default function ProfileDetailPage() {
             <button
               type="button"
               onClick={() => router.back()}
-              aria-label="Pass"
+              aria-label="Dislike"
               className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#1A1612] shadow-md hover:scale-105"
             >
-              <X className="h-6 w-6" />
+              <ThumbsDown className="h-6 w-6" />
             </button>
 
             <button
@@ -365,7 +366,7 @@ export default function ProfileDetailPage() {
               aria-label="Like profile"
               className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-b from-[#DFBE8A] to-[#B58E53] text-[#14110E] shadow-xl hover:scale-105"
             >
-              <Heart className="h-7 w-7" />
+              <ThumbsUp className="h-7 w-7" />
             </button>
 
             <button

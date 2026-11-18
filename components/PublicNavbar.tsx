@@ -7,8 +7,8 @@ import { Download, Menu, X } from "lucide-react";
 export const DEFAULT_NAVBAR_CONTENT = {
   download: "Download",
   register: "Register",
-  login: "Log in",
-  signIn: "Sign in",
+  login: "Sign In",
+  signIn: "Sign In",
   modalTitle: "Get Our App",
   modalBody:
     "Get our app on the Google Play Store or Apple App Store for a smooth on-the-go experience. Stay connected, stay informed, and access the best of our services right at your fingertips",

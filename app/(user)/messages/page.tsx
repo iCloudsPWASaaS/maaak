@@ -8,7 +8,6 @@ import {
   Phone,
   Video,
   XCircle,
-  Lock,
   CheckCheck,
   ShieldCheck,
 } from "lucide-react";
@@ -39,7 +38,7 @@ interface MessageItem {
 export default function MessagesPage() {
   const router = useRouter();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
-  const [activeChatsCount, setActiveChatsCount] = useState(0);
+  const [, setActiveChatsCount] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<MessageItem[]>([]);
@@ -205,7 +204,7 @@ export default function MessagesPage() {
         </div>
       )}
 
-      {/* Active Chat Limit Banner (Max 3 Active Chats Rule) */}
+      {/* Active Chat Limit Banner (Max 3 Active Chats Rule)
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#C59B5F]/40 bg-[#14110E] px-6 py-4 text-xs text-[#FAF6F0]">
         <div className="flex items-center gap-2.5">
           <Lock className="h-4 w-4 text-[#C59B5F]" />
@@ -219,6 +218,7 @@ export default function MessagesPage() {
           Active Chats: {activeChatsCount} / 3
         </span>
       </div>
+      */}
 
       <div className="grid min-h-[540px] overflow-hidden rounded-3xl border border-[#E5DEC9] bg-white shadow-xs lg:grid-cols-12">
         {/* Left Conversations List */}

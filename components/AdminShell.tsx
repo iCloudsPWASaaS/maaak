@@ -46,7 +46,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="border-b border-white/10 px-7 py-6">
             <Link href="/" className="inline-block">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="Ma'aak" className="h-10 w-auto" />
+              <img src="/logo.png" alt="Ma'aak" className="h-14 w-auto" />
             </Link>
             <p className="mt-1.5 text-[11px] text-[#DFBE8A]/80">
               Administration &amp; Moderation
@@ -105,7 +105,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#E5DEC9] bg-[#14110E] px-4 py-3 text-[#FAF6F0] lg:bg-[#FAF6F0]/90 lg:px-8 lg:py-4 lg:text-[#1A1612] lg:backdrop-blur">
           <div className="lg:hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Ma'aak" className="h-8 w-auto" />
+            <img src="/logo.png" alt="Ma'aak" className="h-12 w-auto" />
           </div>
           <span className="hidden text-xs font-semibold uppercase tracking-widest text-[#8C6D3F] lg:block">
             MAAAK Control Room

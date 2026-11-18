@@ -39,7 +39,7 @@ const DEFAULT_COLUMNS: FooterColumn[] = [
   },
   {
     title: "Product",
-    links: [{ label: "Sign Up", href: "/register" }],
+    links: [{ label: "Register", href: "/register" }],
   },
 ];
 
