@@ -30,11 +30,11 @@ const DEFAULT_COLUMNS: FooterColumn[] = [
   {
     title: "Legal",
     links: [
-      { label: "Terms & Conditions", href: "/terms" },
-      { label: "Privacy Policy", href: "/privacy" },
-      { label: "Children Privacy Policy", href: "/children-privacy-policy" },
-      { label: "Account Deletion Policy", href: "/account-deletion-policy" },
-      { label: "Cookies", href: "/cookie-policy" },
+      // { label: "Terms & Conditions", href: "/terms" },
+      // { label: "Privacy Policy", href: "/privacy" },
+      // { label: "Children Privacy Policy", href: "/children-privacy-policy" },
+      // { label: "Account Deletion Policy", href: "/account-deletion-policy" },
+      // { label: "Cookies", href: "/cookie-policy" },
     ],
   },
   {
@@ -52,12 +52,13 @@ const DEFAULT_FOOTER_CONTENT = {
 export async function PublicFooter() {
   const content = await getPublicContent("footer", DEFAULT_FOOTER_CONTENT);
   const columns = getList<FooterColumn>(content.columns, DEFAULT_COLUMNS);
-  const visibleColumns =
+  const visibleColumns = (
     columns.length > 0
       ? columns.filter(
           (column) => column && Array.isArray(column.links) && column.title,
         )
-      : DEFAULT_COLUMNS;
+      : DEFAULT_COLUMNS
+  ).filter((column) => column.title !== "Legal");
 
   return (
     <footer className="public-footer">
