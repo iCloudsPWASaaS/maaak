@@ -255,7 +255,7 @@ export default async function HomePage() {
             </div>
             <div className="public-about-image">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/why-match.webp" alt="image" />
+              <img src="/images/why-match-gold.png" alt="image" />
             </div>
           </div>
         </div>
@@ -316,7 +316,7 @@ export default async function HomePage() {
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/images/verify-blue-tick.webp"
+                src="/images/verify-gold-logo.png"
                 alt=""
                 className="public-verified-image"
               />
@@ -343,7 +343,7 @@ export default async function HomePage() {
             <div>
               <div className="public-visibility-image">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/broad-visibility.webp" alt="" />
+                <img src="/images/broad-visibility-gold.png" alt="" />
               </div>
             </div>
           </div>
