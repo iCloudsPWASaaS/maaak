@@ -7,12 +7,12 @@ import {
   Users,
   Lock,
   Check,
-  Heart,
   MessageCircle,
   Sparkles,
   Crown,
   ArrowRight,
   RefreshCw,
+  ThumbsUp,
 } from "lucide-react";
 import { WatermarkedPhoto } from "@/components/SecurityProtectionLayer";
 
@@ -44,10 +44,6 @@ export default function UserDashboardPage() {
   const [topMatch, setTopMatch] = useState<MatchItem | null>(null);
   const [recalculating, setRecalculating] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-
-  // Email/Mobile OTP verification quick box
-  const [emailOtp, setEmailOtp] = useState("");
-  const [mobileOtp, setMobileOtp] = useState("");
 
   async function loadDashboard() {
     setLoading(true);
@@ -95,23 +91,6 @@ export default function UserDashboardPage() {
       setToast("Saved to your liked profiles!");
       setTimeout(() => setToast(null), 3000);
     }
-  }
-
-  async function handleVerifyOtp(type: "email" | "mobile") {
-    const endpoint =
-      type === "email"
-        ? "/api/v1/auth/verify-email"
-        : "/api/v1/auth/verify-mobile";
-    const code = type === "email" ? emailOtp : mobileOtp;
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code }),
-    });
-    const json = await res.json();
-    setToast(json.message);
-    if (res.ok) loadDashboard();
-    setTimeout(() => setToast(null), 4000);
   }
 
   if (loading) {
@@ -268,53 +247,6 @@ export default function UserDashboardPage() {
         </div>
       </div>
 
-      {/* Optional Email/Mobile OTP Verification Bar if unverified */}
-      {Boolean(user.id) && (!user.email_verified || !user.mobile_verified) && (
-        <div className="rounded-2xl border border-amber-600/30 bg-amber-50/70 p-4 text-xs text-[#1A1612]">
-          <div className="font-semibold text-[#8C6D3F]">
-            Complete Account Contact Verification
-          </div>
-          <div className="mt-2 flex flex-wrap gap-3">
-            {Boolean(!user.email_verified) && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Email 6-digit OTP"
-                  value={emailOtp}
-                  onChange={(e) => setEmailOtp(e.target.value)}
-                  className="rounded-lg border border-[#E5DEC9] bg-white px-3 py-1.5"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleVerifyOtp("email")}
-                  className="rounded-lg bg-[#14110E] px-3 py-1.5 font-semibold text-[#DFBE8A]"
-                >
-                  Verify Email
-                </button>
-              </div>
-            )}
-            {Boolean(!user.mobile_verified) && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Mobile 6-digit OTP"
-                  value={mobileOtp}
-                  onChange={(e) => setMobileOtp(e.target.value)}
-                  className="rounded-lg border border-[#E5DEC9] bg-white px-3 py-1.5"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleVerifyOtp("mobile")}
-                  className="rounded-lg bg-[#14110E] px-3 py-1.5 font-semibold text-[#DFBE8A]"
-                >
-                  Verify Mobile
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Recommended for You Section matching Mock1.png */}
       <div>
         <div className="flex items-center justify-between">
@@ -433,7 +365,7 @@ export default function UserDashboardPage() {
                       onClick={() => handleLike(m.id)}
                       className="inline-flex items-center gap-1.5 rounded-full border border-[#E5DEC9] bg-[#FAF6F0] px-4 py-2.5 text-xs font-semibold text-[#1A1612] hover:border-[#C59B5F]"
                     >
-                      <Heart className="h-3.5 w-3.5 text-[#9C743C]" />
+                      <ThumbsUp className="h-3.5 w-3.5 text-[#9C743C]" />
                       <span>Like</span>
                     </button>
                   </div>

@@ -70,18 +70,9 @@ export default function VerificationPage() {
       <div className="rounded-3xl border border-[#C59B5F]/40 bg-[#14110E] p-8 text-[#FAF6F0]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-widest text-[#DFBE8A]">
-              Didit.me Identity Verification
-            </span>
-            <h1 className="mt-1 font-serif text-3xl font-semibold text-white">
+            <h1 className="font-serif text-3xl font-semibold text-white">
               Checked, Verified &amp; Trusted Badge
             </h1>
-            <p className="mt-2 max-w-2xl text-xs leading-relaxed text-white/75">
-              Ma&apos;aak integrates with Didit.me (Workflow{" "}
-              <code>15480d9c-b20f-45f7-ae86-9aa8f71e8a41</code>) to verify
-              Passports and Driving Licences. We never store raw identity
-              documents—only the cryptographically verified webhook status.
-            </p>
           </div>
 
           {isVerified ? (

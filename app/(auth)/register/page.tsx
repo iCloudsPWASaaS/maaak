@@ -24,6 +24,17 @@ export default function RegisterPage() {
     useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<"details" | "verify">("details");
+  const [emailCode, setEmailCode] = useState("");
+  const [mobileCode, setMobileCode] = useState("");
+  const [previewCodes, setPreviewCodes] = useState<{
+    emailVerificationCode?: string;
+    mobileVerificationCode?: string;
+  } | null>(null);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [mobileVerified, setMobileVerified] = useState(false);
+  const [verifying, setVerifying] = useState<"email" | "mobile" | null>(null);
+  const [resending, setResending] = useState<"email" | "mobile" | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,13 +70,75 @@ export default function RegisterPage() {
           "Unable to complete registration.";
         setError(msg);
       } else {
-        router.push("/profile/wizard?registered=1");
-        router.refresh();
+        setPreviewCodes(json.data?.verificationPreview || null);
+        setStep("verify");
       }
     } catch {
       setError("Network error during registration.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleVerifyContact(type: "email" | "mobile") {
+    const code = type === "email" ? emailCode : mobileCode;
+    if (!code.trim()) {
+      setError(`Enter the 6-digit ${type} verification code.`);
+      return;
+    }
+
+    setVerifying(type);
+    setError(null);
+    try {
+      const res = await fetch(
+        type === "email"
+          ? "/api/v1/auth/verify-email"
+          : "/api/v1/auth/verify-mobile",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        },
+      );
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.message || `Unable to verify ${type}.`);
+        return;
+      }
+      if (type === "email") setEmailVerified(true);
+      else setMobileVerified(true);
+    } catch {
+      setError("Network error during verification.");
+    } finally {
+      setVerifying(null);
+    }
+  }
+
+  async function handleResendContact(type: "email" | "mobile") {
+    setResending(type);
+    setError(null);
+    try {
+      const res = await fetch("/api/v1/auth/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.message || `Unable to resend ${type} code.`);
+        return;
+      }
+      if (json.data?.code) {
+        setPreviewCodes((current) => ({
+          ...(current || {}),
+          [type === "email" ? "emailVerificationCode" : "mobileVerificationCode"]:
+            json.data.code,
+        }));
+      }
+    } catch {
+      setError("Network error while requesting a new code.");
+    } finally {
+      setResending(null);
     }
   }
 
@@ -175,11 +248,163 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Registration Form following profile.xlsx Registration Sheet */}
-        <form
-          onSubmit={handleSubmit}
-          className="mt-6 rounded-3xl border border-white/15 bg-[#1F1A16] p-8 shadow-2xl"
-        >
+        {step === "verify" ? (
+          <div className="mt-6 rounded-3xl border border-[#C59B5F] bg-[#1F1A16] p-8 shadow-2xl">
+            <div className="flex items-center gap-2.5 text-[#DFBE8A]">
+              <ShieldCheck className="h-5 w-5" />
+              <h2 className="font-serif text-xl font-semibold">
+                Verify Your Email &amp; Mobile
+              </h2>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-white/75">
+              Confirm both contact details now to complete registration. Each
+              code is valid for 30 minutes.
+            </p>
+
+            {(previewCodes?.emailVerificationCode ||
+              previewCodes?.mobileVerificationCode) && (
+              <div className="mt-4 rounded-2xl border border-white/15 bg-[#14110E] p-4 text-xs text-white/75">
+                <div className="font-semibold text-[#DFBE8A]">
+                  Demo verification codes
+                </div>
+                <div className="mt-2">
+                  Email:{" "}
+                  <code className="font-bold text-white">
+                    {previewCodes?.emailVerificationCode}
+                  </code>
+                </div>
+                <div>
+                  Mobile:{" "}
+                  <code className="font-bold text-white">
+                    {previewCodes?.mobileVerificationCode}
+                  </code>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/15 bg-[#14110E] p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#DFBE8A]">
+                    Email Address
+                  </span>
+                  {emailVerified && (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  )}
+                </div>
+                <p className="mt-1 break-all text-[11px] text-white/60">{email}</p>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={emailCode}
+                  onChange={(e) => setEmailCode(e.target.value)}
+                  placeholder="6-digit code"
+                  disabled={emailVerified}
+                  className="mt-3 w-full rounded-xl border border-white/15 bg-[#1F1A16] px-4 py-3 text-sm tracking-widest text-white disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleVerifyContact("email")}
+                  disabled={emailVerified || verifying === "email"}
+                  className="mt-3 w-full rounded-full bg-[#C59B5F] px-4 py-2.5 text-xs font-bold text-[#14110E] disabled:opacity-50"
+                >
+                  {emailVerified
+                    ? "Email Verified"
+                    : verifying === "email"
+                      ? "Verifying..."
+                      : "Verify Email"}
+                </button>
+                {!emailVerified && (
+                  <button
+                    type="button"
+                    onClick={() => void handleResendContact("email")}
+                    disabled={resending === "email"}
+                    className="mt-2 w-full text-[11px] font-semibold text-[#DFBE8A] underline disabled:opacity-50"
+                  >
+                    {resending === "email" ? "Sending..." : "Resend email code"}
+                  </button>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-white/15 bg-[#14110E] p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#DFBE8A]">
+                    Mobile Number
+                  </span>
+                  {mobileVerified && (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  )}
+                </div>
+                <p className="mt-1 break-all text-[11px] text-white/60">
+                  {mobileNumber}
+                </p>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={mobileCode}
+                  onChange={(e) => setMobileCode(e.target.value)}
+                  placeholder="6-digit code"
+                  disabled={mobileVerified}
+                  className="mt-3 w-full rounded-xl border border-white/15 bg-[#1F1A16] px-4 py-3 text-sm tracking-widest text-white disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleVerifyContact("mobile")}
+                  disabled={mobileVerified || verifying === "mobile"}
+                  className="mt-3 w-full rounded-full bg-[#C59B5F] px-4 py-2.5 text-xs font-bold text-[#14110E] disabled:opacity-50"
+                >
+                  {mobileVerified
+                    ? "Mobile Verified"
+                    : verifying === "mobile"
+                      ? "Verifying..."
+                      : "Verify Mobile"}
+                </button>
+                {!mobileVerified && (
+                  <button
+                    type="button"
+                    onClick={() => void handleResendContact("mobile")}
+                    disabled={resending === "mobile"}
+                    className="mt-2 w-full text-[11px] font-semibold text-[#DFBE8A] underline disabled:opacity-50"
+                  >
+                    {resending === "mobile" ? "Sending..." : "Resend mobile code"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {error && (
+              <div className="mt-4 rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-300">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="button"
+              disabled={!emailVerified || !mobileVerified}
+              onClick={() => {
+                router.push("/profile/wizard?registered=1");
+                router.refresh();
+              }}
+              className="mt-6 w-full rounded-full bg-gradient-to-r from-[#C59B5F] to-[#DFBE8A] py-4 text-xs font-bold text-[#14110E] disabled:opacity-50"
+            >
+              Continue to Profile
+            </button>
+            <p className="mt-4 text-center text-xs text-white/65">
+              <Link
+                href="/profile/wizard?registered=1"
+                className="font-semibold text-[#DFBE8A] underline"
+              >
+                Continue without verifying
+              </Link>
+            </p>
+          </div>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="mt-6 rounded-3xl border border-white/15 bg-[#1F1A16] p-8 shadow-2xl"
+          >
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label className="block text-xs font-medium text-[#DFBE8A]">
@@ -413,7 +638,8 @@ export default function RegisterPage() {
               Sign In
             </Link>
           </p>
-        </form>
+          </form>
+        )}
       </div>
     </div>
   );

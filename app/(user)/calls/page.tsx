@@ -349,16 +349,12 @@ export default function CallsPage() {
       )}
 
       <div>
-        <span className="text-xs font-bold uppercase tracking-widest text-[#9C743C]">
-          Agora Real-Time Communication
-        </span>
         <h1 className="font-serif text-3xl font-semibold text-[#1A1612]">
-          Secure Voice &amp; Video Calling
+          Voice &amp; Video Calls
+          <span className="ml-3 inline-flex items-center rounded-full border border-[#C59B5F]/40 bg-[#C59B5F]/15 px-3 py-1 align-middle text-[11px] font-bold uppercase tracking-wide text-[#9C743C]">
+            Coming Soon
+          </span>
         </h1>
-        <p className="text-xs text-[#665C4E]">
-          All Agora channel tokens are generated server-side and restricted to
-          authorised conversation participants.
-        </p>
       </div>
 
       {activeCall ? (

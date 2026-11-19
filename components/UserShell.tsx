@@ -12,28 +12,37 @@ import {
   Crown,
   ShieldCheck,
   Bell,
-  PhoneCall,
+  Compass,
   Send,
   Settings,
   LogOut,
-  Sparkles,
+  LifeBuoy,
   Menu,
   X,
 } from "lucide-react";
 
 const SIDEBAR_ITEMS = [
   { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/matches", label: "Matches", icon: Heart },
-  { href: "/explore", label: "Explore & Filter", icon: Sparkles },
-  { href: "/requests", label: "Intro Requests", icon: Send },
-  { href: "/messages", label: "Messages", icon: MessageCircle },
-  { href: "/calls", label: "Voice & Video Calls", icon: PhoneCall },
-  { href: "/profile/wizard", label: "My Profile Wizard", icon: User },
-  { href: "/preferences", label: "Preferences", icon: SlidersHorizontal },
-  { href: "/verification", label: "ID Verification", icon: ShieldCheck },
+  { href: "/explore", label: "Discover", icon: Compass },
+  { href: "/matches", label: "My Matches", icon: Heart },
+  { href: "/requests", label: "Introductions", icon: Send },
+  {
+    href: "/profile/wizard",
+    label: "My Profile",
+    icon: User,
+    separatorBefore: true,
+  },
+  { href: "/preferences", label: "My Preferences", icon: SlidersHorizontal },
+  { href: "/verification", label: "Verification", icon: ShieldCheck },
   { href: "/subscription", label: "Membership", icon: Crown },
-  { href: "/notifications", label: "Notifications", icon: Bell },
+  {
+    href: "/notifications",
+    label: "Notifications",
+    icon: Bell,
+    separatorBefore: true,
+  },
   { href: "/settings", label: "Safety & Settings", icon: Settings },
+  { href: "/faq", label: "Help & Support", icon: LifeBuoy },
 ];
 
 export function UserShell({ children }: { children: React.ReactNode }) {
@@ -77,22 +86,26 @@ export function UserShell({ children }: { children: React.ReactNode }) {
               const active =
                 pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3.5 rounded-xl px-4 py-3 text-xs font-medium transition ${
-                    active
-                      ? "bg-[#332A1E] text-[#DFBE8A] shadow-inner border border-[#C59B5F]/30"
-                      : "text-white/75 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <Icon
-                    className={`h-4 w-4 ${
-                      active ? "text-[#C59B5F]" : "text-white/60"
+                <React.Fragment key={item.href}>
+                  {item.separatorBefore && (
+                    <div className="mx-2 my-2 border-t border-[#493C2B]" />
+                  )}
+                  <Link
+                    href={item.href}
+                    className={`flex items-center gap-3.5 rounded-xl px-4 py-3 text-xs font-medium transition ${
+                      active
+                        ? "bg-[#332A1E] text-[#DFBE8A] shadow-inner border border-[#C59B5F]/30"
+                        : "text-white/75 hover:bg-white/5 hover:text-white"
                     }`}
-                  />
-                  <span>{item.label}</span>
-                </Link>
+                  >
+                    <Icon
+                      className={`h-4 w-4 ${
+                        active ? "text-[#C59B5F]" : "text-white/60"
+                      }`}
+                    />
+                    <span>{item.label}</span>
+                  </Link>
+                </React.Fragment>
               );
             })}
           </nav>
@@ -198,23 +211,27 @@ export function UserShell({ children }: { children: React.ReactNode }) {
               const active =
                 pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setDrawerOpen(false)}
-                  className={`flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-medium transition ${
-                    active
-                      ? "border border-[#C59B5F]/30 bg-[#332A1E] text-[#DFBE8A]"
-                      : "text-white/75 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <Icon
-                    className={`h-4 w-4 ${
-                      active ? "text-[#C59B5F]" : "text-white/60"
+                <React.Fragment key={item.href}>
+                  {item.separatorBefore && (
+                    <div className="mx-1 my-2 border-t border-[#493C2B]" />
+                  )}
+                  <Link
+                    href={item.href}
+                    onClick={() => setDrawerOpen(false)}
+                    className={`flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-medium transition ${
+                      active
+                        ? "border border-[#C59B5F]/30 bg-[#332A1E] text-[#DFBE8A]"
+                        : "text-white/75 hover:bg-white/5 hover:text-white"
                     }`}
-                  />
-                  <span>{item.label}</span>
-                </Link>
+                  >
+                    <Icon
+                      className={`h-4 w-4 ${
+                        active ? "text-[#C59B5F]" : "text-white/60"
+                      }`}
+                    />
+                    <span>{item.label}</span>
+                  </Link>
+                </React.Fragment>
               );
             })}
           </nav>

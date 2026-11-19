@@ -300,15 +300,9 @@ export default function RecommendedMatchesPage() {
       <div className="hidden space-y-8 lg:block">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-widest text-[#9C743C]">
-            Gale-Shapley Stable Matching
-          </span>
           <h1 className="font-serif text-3xl font-semibold text-[#1A1612] sm:text-4xl">
             Your Mutually Compatible Matches
           </h1>
-          <p className="text-xs text-[#665C4E]">
-            Every profile shown has passed both your dealbreakers and theirs.
-          </p>
         </div>
         <button
           type="button"

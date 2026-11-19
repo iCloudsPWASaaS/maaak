@@ -552,3 +552,53 @@ export async function verifyUserCode(
 
   return { ok: true as const };
 }
+
+export async function resendContactVerificationCode(
+  userId: string,
+  type: "email" | "mobile",
+) {
+  const sb = createAdminSupabaseClient();
+  const { data: account } = await sb
+    .from("users")
+    .select("email, mobile_number")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (!account) {
+    return { ok: false as const, message: "Account not found." };
+  }
+
+  const codeType =
+    type === "email" ? "email_verification" : "mobile_verification";
+  const target =
+    type === "email" ? String(account.email || "") : String(account.mobile_number || "");
+
+  if (!target) {
+    return { ok: false as const, message: "No contact detail found to verify." };
+  }
+
+  const code = generateOtpCode(6);
+  const now = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+
+  await sb
+    .from("verification_codes")
+    .update({ consumed_at: now })
+    .eq("user_id", userId)
+    .eq("type", codeType)
+    .is("consumed_at", null);
+
+  const { error } = await sb.from("verification_codes").insert({
+    user_id: userId,
+    type: codeType,
+    target,
+    code,
+    expires_at: expiresAt,
+  });
+
+  if (error) {
+    return { ok: false as const, message: error.message };
+  }
+
+  return { ok: true as const, code, target };
+}
