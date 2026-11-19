@@ -79,23 +79,23 @@ export function CookieConsent({
   if (!visible) return null;
 
   return (
-    <div className="fixed right-4 bottom-28 left-4 z-40 max-w-md rounded-2xl border border-[#C59B5F]/40 bg-white p-5 text-black shadow-2xl sm:right-auto sm:bottom-6 sm:left-6 sm:w-96">
+    <div className="fixed right-4 bottom-28 left-4 z-40 max-w-md rounded-2xl border border-[#C59B5F]/40 bg-[#1F1A16] p-5 text-[#FAF6F0] shadow-2xl sm:right-auto sm:bottom-6 sm:left-6 sm:w-96">
       <div className="flex items-start gap-3">
         <Cookie className="mt-0.5 h-5 w-5 shrink-0 text-[#C59B5F]" />
         <div>
-          <h3 className="text-base font-semibold text-black">{text.title}</h3>
-          <p className="mt-1 text-xs leading-relaxed text-black">
+          <h3 className="text-base font-semibold text-[#DFBE8A]">{text.title}</h3>
+          <p className="mt-1 text-xs leading-relaxed text-[#FAF6F0]/85">
             {text.bodyBefore}{" "}
             <Link
               href="/cookie-policy"
-              className="font-medium text-black underline"
+              className="font-medium text-[#DFBE8A] underline"
             >
               Cookie Policy
             </Link>{" "}
             {text.bodyBetween}{" "}
             <Link
               href="/privacy"
-              className="font-medium text-black underline"
+              className="font-medium text-[#DFBE8A] underline"
             >
               Privacy Policy
             </Link>
@@ -105,16 +105,16 @@ export function CookieConsent({
       </div>
 
       {preferences && (
-        <div className="mt-4 space-y-2 rounded-xl border border-[#C59B5F]/20 bg-[#FAF6F0] p-3 text-xs">
+        <div className="mt-4 space-y-2 rounded-xl border border-[#C59B5F]/20 bg-[#14110E] p-3 text-xs">
           <label className="flex items-center justify-between gap-3">
-            <span className="text-black">
+            <span className="text-[#FAF6F0]">
               {text.essential}{" "}
-              <span className="text-black/60">{text.alwaysOn}</span>
+              <span className="text-[#FAF6F0]/60">{text.alwaysOn}</span>
             </span>
             <input type="checkbox" checked readOnly className="accent-[#C59B5F]" />
           </label>
           <label className="flex items-center justify-between gap-3">
-              <span className="text-black">{text.analytics}</span>
+              <span className="text-[#FAF6F0]">{text.analytics}</span>
             <input
               type="checkbox"
               checked={analytics}
@@ -123,7 +123,7 @@ export function CookieConsent({
             />
           </label>
           <label className="flex items-center justify-between gap-3">
-              <span className="text-black">{text.advertising}</span>
+              <span className="text-[#FAF6F0]">{text.advertising}</span>
             <input
               type="checkbox"
               checked={advertising}
@@ -140,7 +140,7 @@ export function CookieConsent({
           onClick={() =>
             decide({ essential: true, analytics: true, advertising: true })
           }
-          className="rounded-full bg-gradient-to-r from-[#C59B5F] to-[#DFBE8A] px-4 py-2 text-xs font-semibold text-black transition hover:opacity-95"
+          className="rounded-full bg-gradient-to-r from-[#C59B5F] to-[#DFBE8A] px-4 py-2 text-xs font-semibold text-[#14110E] transition hover:opacity-95"
         >
           {text.accept}
         </button>
@@ -149,7 +149,7 @@ export function CookieConsent({
           onClick={() =>
             decide({ essential: true, analytics: false, advertising: false })
           }
-          className="rounded-full border border-[#C59B5F]/40 px-4 py-2 text-xs font-semibold text-black transition hover:bg-[#F3EEE7]"
+          className="rounded-full border border-[#C59B5F]/40 px-4 py-2 text-xs font-semibold text-[#DFBE8A] transition hover:bg-[#C59B5F]/15"
         >
           {text.decline}
         </button>
@@ -157,7 +157,7 @@ export function CookieConsent({
           <button
             type="button"
             onClick={() => decide({ essential: true, analytics, advertising })}
-            className="text-xs font-semibold text-black underline"
+            className="text-xs font-semibold text-[#DFBE8A] underline"
           >
             {text.save}
           </button>
@@ -165,7 +165,7 @@ export function CookieConsent({
           <button
             type="button"
             onClick={() => setPreferences(true)}
-            className="text-xs font-semibold text-black underline"
+            className="text-xs font-semibold text-[#DFBE8A] underline"
           >
             {text.preferences}
           </button>
