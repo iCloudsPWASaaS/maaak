@@ -42,7 +42,7 @@ const SIDEBAR_ITEMS = [
     separatorBefore: true,
   },
   { href: "/settings", label: "Safety & Settings", icon: Settings },
-  { href: "/faq", label: "Help & Support", icon: LifeBuoy },
+  { href: "/help-support", label: "Help & Support", icon: LifeBuoy },
 ];
 
 export function UserShell({ children }: { children: React.ReactNode }) {
@@ -157,9 +157,7 @@ export function UserShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <main
-          className={`mx-auto w-full flex-1 px-4 sm:px-6 lg:px-8 ${
-            pathname === "/dashboard" ? "max-w-none" : "max-w-6xl"
-          } ${
+          className={`w-full flex-1 px-4 sm:px-6 lg:px-8 ${
             pathname === "/matches"
               ? "pt-0 pb-20 lg:pt-8 lg:pb-6"
               : "py-6 pb-20 lg:pb-0"

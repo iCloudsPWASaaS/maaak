@@ -13,8 +13,8 @@ import {
   Puzzle,
   RefreshCw,
   Send,
-  ShieldCheck,
   Sparkles,
+  Star,
   ThumbsDown,
   ThumbsUp,
   User,
@@ -58,12 +58,20 @@ const MOBILE_TABS = [
   { href: "/profile/wizard", label: "You", icon: User },
 ];
 
+function isLiked(action?: string | null) {
+  return action === "like" || action === "thumbs_up";
+}
+
+function isPassed(action?: string | null) {
+  return action === "dislike" || action === "thumbs_down";
+}
+
 export default function RecommendedMatchesPage() {
   const [matches, setMatches] = useState<MatchCardItem[]>([]);
-  const [topMatch, setTopMatch] = useState<MatchCardItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [pendingBookmark, setPendingBookmark] = useState<string | null>(null);
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
 
   async function loadMatches() {
     setLoading(true);
@@ -71,7 +79,6 @@ export default function RecommendedMatchesPage() {
     if (res.ok) {
       const json = await res.json();
       setMatches(json.data?.recommended || []);
-      setTopMatch(json.data?.topMatch || null);
     }
     setLoading(false);
   }
@@ -93,11 +100,15 @@ export default function RecommendedMatchesPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: type }),
     });
-    if (res.ok) {
-      setToast(`Recorded ${type.replace("_", " ")}!`);
-      setTimeout(() => setToast(null), 3000);
-      loadMatches();
-    }
+    if (!res.ok) return;
+
+    setMatches((current) =>
+      current.map((match) =>
+        match.id === targetId ? { ...match, my_action: type } : match,
+      ),
+    );
+    setToast(`Recorded ${type.replace("_", " ")}!`);
+    setTimeout(() => setToast(null), 3000);
   }
 
   async function handleBookmark(targetId: string) {
@@ -120,11 +131,6 @@ export default function RecommendedMatchesPage() {
         current.map((match) =>
           match.id === targetId ? { ...match, my_action: nextAction } : match,
         ),
-      );
-      setTopMatch((current) =>
-        current?.id === targetId
-          ? { ...current, my_action: nextAction }
-          : current,
       );
       setToast(removed ? "Removed from bookmarks." : "Saved to your bookmarks.");
       setTimeout(() => setToast(null), 3000);
@@ -149,7 +155,33 @@ export default function RecommendedMatchesPage() {
     setTimeout(() => setToast(null), 4000);
   }
 
+  const savedMatches = matches.filter(
+    (match) => isLiked(match.my_action) || match.my_action === "bookmark",
+  );
+
+  useEffect(() => {
+    setSpotlightIndex((current) =>
+      current >= savedMatches.length ? 0 : current,
+    );
+  }, [savedMatches.length]);
+
+  useEffect(() => {
+    if (savedMatches.length <= 1) return;
+
+    const interval = window.setInterval(() => {
+      setSpotlightIndex((current) => (current + 1) % savedMatches.length);
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [savedMatches.length]);
+
+  const topMatch =
+    savedMatches[
+      Math.min(spotlightIndex, Math.max(savedMatches.length - 1, 0))
+    ] || null;
   const mobileBookmarked = topMatch?.my_action === "bookmark";
+  const mobileLiked = isLiked(topMatch?.my_action);
+  const mobilePassed = isPassed(topMatch?.my_action);
   const mobileScore = topMatch?.compatibility?.mutual_score ?? 92;
   const mobileIntention = topMatch?.looking_for_intention || "Marriage";
   const mobileParenthood = topMatch?.has_children
@@ -304,18 +336,32 @@ export default function RecommendedMatchesPage() {
                 <button
                   type="button"
                   aria-label="Dislike"
+                  aria-pressed={mobilePassed}
                   onClick={() => handleAction(topMatch.id, "dislike")}
-                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[#E5DEC9] bg-white text-[#1A1612] shadow"
+                  className={`flex h-12 w-12 items-center justify-center rounded-full border shadow transition ${
+                    mobilePassed
+                      ? "border-[#C65B5B] bg-[#FEF3F3] text-[#C65B5B]"
+                      : "border-[#E5DEC9] bg-white text-[#1A1612]"
+                  }`}
                 >
-                  <ThumbsDown className="h-5 w-5" />
+                  <ThumbsDown
+                    className={`h-5 w-5 ${mobilePassed ? "fill-current" : ""}`}
+                  />
                 </button>
                 <button
                   type="button"
                   aria-label="Like"
+                  aria-pressed={mobileLiked}
                   onClick={() => handleAction(topMatch.id, "like")}
-                  className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#C59B5F] to-[#DFBE8A] text-white shadow-lg"
+                  className={`flex h-16 w-16 items-center justify-center rounded-full text-white shadow-lg transition ${
+                    mobileLiked
+                      ? "bg-[#2F8B4E]"
+                      : "bg-gradient-to-br from-[#C59B5F] to-[#DFBE8A]"
+                  }`}
                 >
-                  <ThumbsUp className="h-7 w-7" />
+                  <ThumbsUp
+                    className={`h-7 w-7 ${mobileLiked ? "fill-current" : ""}`}
+                  />
                 </button>
                 <button
                   type="button"
@@ -331,10 +377,10 @@ export default function RecommendedMatchesPage() {
         ) : (
           <div className="rounded-[2rem] bg-[#F3E9DC] p-8 text-center">
             <p className="font-serif text-lg font-semibold text-[#1A1612]">
-              No compatible matches yet
+              No saved profiles yet
             </p>
             <p className="mt-1 text-xs text-[#665C4E]">
-              Check back soon as new members join Ma&apos;aak.
+              Like or bookmark a profile and it will appear here.
             </p>
           </div>
         )}
@@ -344,7 +390,7 @@ export default function RecommendedMatchesPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-serif text-3xl font-semibold text-[#1A1612] sm:text-4xl">
-            Your Mutually Compatible Matches
+            Your Saved &amp; Liked Profiles
           </h1>
         </div>
         <button
@@ -360,41 +406,42 @@ export default function RecommendedMatchesPage() {
         </button>
       </div>
 
-      {/* Gale-Shapley Optimal Match Spotlight */}
+      {/* Saved profile spotlight */}
       {topMatch && (
-        <div className="overflow-hidden rounded-3xl border-2 border-[#C59B5F] bg-[#14110E] text-[#FAF6F0] shadow-xl">
+        <div className="overflow-hidden rounded-3xl border border-[#E5DEC9] bg-white shadow-sm">
           <div className="grid items-center gap-6 lg:grid-cols-12">
-            <div className="relative h-80 lg:col-span-5 lg:h-full">
+            <div className="relative h-72 sm:h-80 lg:col-span-6">
               <WatermarkedPhoto
                 src={
                   topMatch.photos?.[0]?.url ||
                   "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=900&q=80"
                 }
                 alt={topMatch.first_name}
-                watermarkText={
-                  topMatch.photos?.[0]?.watermark || "MA'AAK STABLE MATCH"
-                }
-                className="h-full min-h-80 w-full"
+                className="h-full w-full"
+                fit="contain"
+                showWatermark={false}
               />
             </div>
 
-            <div className="p-7 lg:col-span-7">
+            <div className="p-5 sm:p-6 lg:col-span-6">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[#C59B5F] px-3 py-1 text-xs font-bold text-[#14110E]">
-                  <Sparkles className="h-3.5 w-3.5" /> Gale-Shapley #1 Stable
-                  Match
+                  <Sparkles className="h-3.5 w-3.5" /> Saved Profile
+                  {savedMatches.length > 1
+                    ? ` ${spotlightIndex + 1}/${savedMatches.length}`
+                    : ""}
                 </span>
-                <span className="rounded-full border border-[#C59B5F]/50 px-3 py-1 text-xs font-semibold text-[#DFBE8A]">
+                <span className="rounded-full border border-[#C59B5F]/50 px-3 py-1 text-xs font-semibold text-[#9C743C]">
                   {topMatch.compatibility?.mutual_score ?? 95}% Mutual
                   Compatibility
                 </span>
               </div>
 
-              <h2 className="mt-4 font-serif text-3xl font-semibold text-white">
+              <h2 className="mt-3 font-serif text-2xl font-semibold text-[#1A1612] sm:text-3xl">
                 {topMatch.first_name}
                 {topMatch.age ? `, ${topMatch.age}` : ""}
               </h2>
-              <p className="mt-1 text-xs text-white/75">
+              <p className="mt-1 text-xs text-[#665C4E]">
                 {topMatch.city} ({topMatch.postcode_area}) •{" "}
                 {topMatch.profession} • {topMatch.relationship_status} •{" "}
                 {topMatch.has_children
@@ -402,22 +449,22 @@ export default function RecommendedMatchesPage() {
                   : "No children"}
               </p>
 
-              <p className="mt-4 text-sm leading-relaxed text-white/85">
+              <p className="mt-3 text-xs leading-relaxed text-[#4A4238] sm:text-sm">
                 {topMatch.short_bio}
               </p>
 
               {topMatch.compatibility?.area_breakdown && (
-                <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
                   {Object.entries(topMatch.compatibility.area_breakdown).map(
                     ([area, val]) => (
                       <div
                         key={area}
-                        className="rounded-xl border border-white/10 bg-[#1F1A16] px-3 py-2"
+                        className="rounded-xl border border-[#E5DEC9] bg-[#FBF7F2] px-3 py-2"
                       >
-                        <div className="text-[10px] uppercase text-white/60">
+                        <div className="text-[10px] uppercase text-[#665C4E]">
                           {area.replace("_", " ")}
                         </div>
-                        <div className="font-serif text-lg font-bold text-[#DFBE8A]">
+                        <div className="font-serif text-lg font-bold text-[#9C743C]">
                           {val}%
                         </div>
                       </div>
@@ -426,7 +473,7 @@ export default function RecommendedMatchesPage() {
                 </div>
               )}
 
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-5 flex flex-wrap gap-3">
                 <Link
                   href={`/profiles/${topMatch.id}`}
                   className="rounded-full bg-gradient-to-r from-[#C59B5F] to-[#DFBE8A] px-6 py-2.5 text-xs font-bold text-[#14110E]"
@@ -438,7 +485,7 @@ export default function RecommendedMatchesPage() {
                   onClick={() =>
                     handleSendIntro(topMatch.id, topMatch.first_name)
                   }
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#C59B5F] px-5 py-2.5 text-xs font-semibold text-[#DFBE8A]"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#C59B5F] px-5 py-2.5 text-xs font-semibold text-[#9C743C]"
                 >
                   <Send className="h-3.5 w-3.5" />
                   <span>Send Introduction Request</span>
@@ -449,88 +496,89 @@ export default function RecommendedMatchesPage() {
         </div>
       )}
 
-      {/* All Mutually Eligible Recommendations */}
+      {/* Saved and liked profiles */}
       {loading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <div className="h-80 animate-pulse rounded-3xl bg-[#EFE8DC]" />
           <div className="h-80 animate-pulse rounded-3xl bg-[#EFE8DC]" />
           <div className="h-80 animate-pulse rounded-3xl bg-[#EFE8DC]" />
         </div>
+      ) : savedMatches.length === 0 ? (
+        <div className="rounded-3xl border border-[#E5DEC9] bg-white p-10 text-center">
+          <p className="font-serif text-xl font-semibold text-[#1A1612]">
+            No saved profiles yet
+          </p>
+          <p className="mt-1 text-xs text-[#665C4E]">
+            Like or bookmark a profile and it will appear here.
+          </p>
+        </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {matches.map((m) => (
+          {savedMatches.map((m) => (
             <div
               key={m.id}
-              className="flex flex-col justify-between overflow-hidden rounded-3xl border border-[#E5DEC9] bg-white shadow-xs"
+              className="flex flex-col overflow-hidden rounded-2xl border border-[#E8E0D4] bg-white shadow-[0_8px_24px_rgba(64,45,22,0.05)] transition hover:shadow-[0_14px_32px_rgba(64,45,22,0.1)]"
             >
-              <div>
-                <div className="relative h-72">
-                  <WatermarkedPhoto
-                    src={
-                      m.photos?.[0]?.url ||
-                      "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=900&q=80"
-                    }
-                    alt={m.first_name}
-                    watermarkText={m.photos?.[0]?.watermark || "MA'AAK"}
-                    className="h-full w-full"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
-                  <div className="absolute top-3 left-3">
-                    {m.id_verified && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[#1A1612]">
-                        <ShieldCheck className="h-3.5 w-3.5 text-[#9C743C]" />
-                        Verified
-                      </span>
-                    )}
-                  </div>
-                  <div className="absolute right-3 bottom-3 left-3 flex items-end justify-between text-white">
-                    <div>
-                      <h3 className="font-serif text-2xl font-semibold">
-                        {m.first_name}
-                        {m.age ? `, ${m.age}` : ""}
-                      </h3>
-                      <p className="text-xs text-white/85">
-                        {m.city} ({m.postcode_area}) •{" "}
-                        {m.has_children
-                          ? `Parent of ${m.children_count}`
-                          : m.relationship_status}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-[#B58E53] px-3 py-1 text-xs font-bold text-white">
-                      {m.compatibility?.mutual_score ?? 90}% Match
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-5">
-                  <p className="line-clamp-2 text-xs leading-relaxed text-[#5C5346]">
-                    {m.short_bio}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {(m.compatibility?.match_reasons || []).map((r, i) => (
-                      <span
-                        key={i}
-                        className="rounded-full bg-[#FAF6F0] px-2.5 py-1 text-[10px] font-medium text-[#8C6D3F]"
-                      >
-                        ✓ {r}
-                      </span>
-                    ))}
-                  </div>
+              <div className="relative aspect-[4/5] w-full overflow-hidden">
+                <WatermarkedPhoto
+                  src={
+                    m.photos?.[0]?.url ||
+                    "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=900&q=80"
+                  }
+                  alt={`${m.first_name}'s profile`}
+                  watermarkText={m.photos?.[0]?.watermark || "MA'AAK VERIFIED"}
+                  className="h-full w-full"
+                />
+                <div className="absolute top-3 right-3 left-3 flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-[#3D362D] shadow-sm">
+                    <Star className="h-3 w-3 fill-[#A97C3F] text-[#A97C3F]" />
+                    Recommended
+                  </span>
+                  <span className="rounded-full bg-[#A97C3F] px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">
+                    {m.compatibility?.mutual_score ?? 90}% Match
+                  </span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-2 border-t border-[#FAF6F0] px-5 py-3.5">
+              <div className="flex flex-1 flex-col p-4">
+                <h3 className="font-serif text-lg font-bold text-[#201A14]">
+                  {m.first_name}
+                  {m.age ? `, ${m.age}` : ""}
+                </h3>
+                <p className="mt-1 flex items-start gap-1.5 text-[11px] leading-relaxed text-[#6B6155]">
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#A97C3F]" />
+                  <span>
+                    {m.city} ({m.postcode_area}) · {m.relationship_status} ·{" "}
+                    {m.has_children ? `Parent of ${m.children_count}` : "No children"}
+                  </span>
+                </p>
+                <p className="mt-3 line-clamp-2 text-[11px] leading-relaxed text-[#5C5346]">
+                  {m.short_bio}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {(m.compatibility?.match_reasons || []).map((r, i) => (
+                    <span
+                      key={i}
+                      className="rounded-full bg-[#FAF6F0] px-2.5 py-1 text-[10px] font-medium text-[#8C6D3F]"
+                    >
+                      ✓ {r}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-auto flex items-center justify-between gap-2 border-t border-[#EFE7DC] px-4 py-3.5">
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/profiles/${m.id}`}
-                    className="rounded-full border border-[#14110E] px-3.5 py-1.5 text-xs font-semibold text-[#1A1612]"
+                    className="rounded-full border border-[#E8E0D4] px-3.5 py-1.5 text-[11px] font-bold text-[#201A14]"
                   >
                     Details
                   </Link>
                   <button
                     type="button"
                     onClick={() => handleSendIntro(m.id, m.first_name)}
-                    className="rounded-full bg-[#14110E] px-3.5 py-1.5 text-xs font-semibold text-[#DFBE8A]"
+                    className="rounded-full bg-[#A97C3F] px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#956B35]"
                   >
                     Send Intro
                   </button>
@@ -541,17 +589,37 @@ export default function RecommendedMatchesPage() {
                     type="button"
                     onClick={() => handleAction(m.id, "thumbs_up")}
                     title="Thumbs Up"
-                    className="rounded-full border border-[#E5DEC9] p-2 text-[#1A1612] hover:border-[#C59B5F]"
+                    aria-label="Thumbs Up"
+                    aria-pressed={isLiked(m.my_action)}
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                      isLiked(m.my_action)
+                        ? "border-[#2F8B4E] bg-[#DFF2E5]"
+                        : "border-[#BFE3C8] bg-[#F0FAF2] hover:bg-[#E2F5E7]"
+                    }`}
                   >
-                    <ThumbsUp className="h-3.5 w-3.5 text-[#9C743C]" />
+                    <ThumbsUp
+                      className={`h-3.5 w-3.5 text-[#2F8B4E] ${
+                        isLiked(m.my_action) ? "fill-current" : ""
+                      }`}
+                    />
                   </button>
                   <button
                     type="button"
                     onClick={() => handleAction(m.id, "thumbs_down")}
                     title="Thumbs Down"
-                    className="rounded-full border border-[#E5DEC9] p-2 text-[#1A1612] hover:border-rose-400"
+                    aria-label="Thumbs Down"
+                    aria-pressed={isPassed(m.my_action)}
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                      isPassed(m.my_action)
+                        ? "border-[#C65B5B] bg-[#F9DFDF]"
+                        : "border-[#F2CBCB] bg-[#FEF3F3] hover:bg-[#FCE7E7]"
+                    }`}
                   >
-                    <ThumbsDown className="h-3.5 w-3.5 text-[#665C4E]" />
+                    <ThumbsDown
+                      className={`h-3.5 w-3.5 text-[#C65B5B] ${
+                        isPassed(m.my_action) ? "fill-current" : ""
+                      }`}
+                    />
                   </button>
                   <button
                     type="button"

@@ -3,12 +3,13 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  Bookmark,
+  MapPin,
   Search,
   SlidersHorizontal,
-  ShieldCheck,
-  Heart,
-  ThumbsUp,
+  Star,
   ThumbsDown,
+  ThumbsUp,
   Send,
 } from "lucide-react";
 import { WatermarkedPhoto } from "@/components/SecurityProtectionLayer";
@@ -35,6 +36,7 @@ interface ExploreProfile {
   children_count: string;
   short_bio: string;
   photos: { id: string; url: string; watermark?: string }[];
+  my_action?: string | null;
   compatibility?: {
     mutual_score: number;
     match_reasons?: string[];
@@ -45,6 +47,7 @@ export default function ExploreAndFilterPage() {
   const [profiles, setProfiles] = useState<ExploreProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
+  const [pendingBookmark, setPendingBookmark] = useState<string | null>(null);
 
   // Advanced Filter State based on profile.xlsx
   const [search, setSearch] = useState("");
@@ -100,19 +103,57 @@ export default function ExploreAndFilterPage() {
 
   async function handleInteraction(
     id: string,
-    action: "like" | "dislike" | "thumbs_up" | "thumbs_down",
+    action: "thumbs_up" | "thumbs_down",
   ) {
-    const url =
-      action === "like" || action === "thumbs_up"
-        ? `/api/v1/profiles/${id}/like`
-        : `/api/v1/profiles/${id}/dislike`;
-    await fetch(url, {
+    const endpoint = action === "thumbs_up" ? "like" : "dislike";
+    const res = await fetch(`/api/v1/profiles/${id}/${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action }),
     });
+
+    if (!res.ok) return;
+
+    setProfiles((current) =>
+      current.map((profile) =>
+        profile.id === id ? { ...profile, my_action: action } : profile,
+      ),
+    );
     setToast(`Saved ${action.replace("_", " ")}!`);
     setTimeout(() => setToast(null), 2500);
+  }
+
+  async function handleBookmark(id: string) {
+    setPendingBookmark(id);
+
+    try {
+      const res = await fetch(`/api/v1/profiles/${id}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "bookmark" }),
+      });
+
+      if (!res.ok) return;
+
+      const json = await res.json();
+      const nextAction = json.data?.removed ? null : "bookmark";
+
+      setProfiles((current) =>
+        current.map((profile) =>
+          profile.id === id ? { ...profile, my_action: nextAction } : profile,
+        ),
+      );
+      setToast(
+        json.data?.removed
+          ? "Removed from bookmarks."
+          : "Saved to your bookmarks.",
+      );
+      setTimeout(() => setToast(null), 3000);
+    } catch {
+      return;
+    } finally {
+      setPendingBookmark(null);
+    }
   }
 
   async function handleSendRequest(id: string, firstName: string) {
@@ -392,108 +433,135 @@ export default function ExploreAndFilterPage() {
           {profiles.map((p) => (
             <div
               key={p.id}
-              className="flex flex-col justify-between overflow-hidden rounded-3xl border border-[#E5DEC9] bg-white shadow-xs"
+              className="flex flex-col overflow-hidden rounded-2xl border border-[#E8E0D4] bg-white shadow-[0_8px_24px_rgba(64,45,22,0.05)] transition hover:shadow-[0_14px_32px_rgba(64,45,22,0.1)]"
             >
-              <div>
-                <div className="relative h-72">
-                  <WatermarkedPhoto
-                    src={
-                      p.photos?.[0]?.url ||
-                      "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=900&q=80"
-                    }
-                    alt={p.first_name}
-                    watermarkText={p.photos?.[0]?.watermark || "MA'AAK"}
-                    className="h-full w-full"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
-                  <div className="absolute top-3 left-3">
-                    {p.id_verified && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[#1A1612]">
-                        <ShieldCheck className="h-3.5 w-3.5 text-[#9C743C]" />
-                        Verified
-                      </span>
-                    )}
-                  </div>
-                  <div className="absolute right-3 bottom-3 left-3 flex items-end justify-between text-white">
-                    <div>
-                      <h3 className="font-serif text-2xl font-semibold">
-                        {p.first_name}
-                        {p.age ? `, ${p.age}` : ""}
-                      </h3>
-                      <p className="text-xs text-white/85">
-                        {p.city} ({p.postcode_area}) • {p.profession}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-[#B58E53] px-3 py-1 text-xs font-bold text-white">
-                      {p.compatibility?.mutual_score ?? 88}% Match
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-5">
-                  <div className="flex flex-wrap gap-1.5 text-[11px] text-[#665C4E]">
-                    <span className="rounded-md bg-[#FAF6F0] px-2 py-0.5">
-                      {p.relationship_status}
-                    </span>
-                    <span className="rounded-md bg-[#FAF6F0] px-2 py-0.5">
-                      {p.has_children
-                        ? `Parent (${p.children_count})`
-                        : "No children"}
-                    </span>
-                    {p.religious_denomination && (
-                      <span className="rounded-md bg-[#FAF6F0] px-2 py-0.5">
-                        {p.religious_denomination}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-3 line-clamp-2 text-xs text-[#3D362D]">
-                    {p.short_bio}
-                  </p>
+              <div className="relative aspect-[4/5] w-full overflow-hidden">
+                <WatermarkedPhoto
+                  src={
+                    p.photos?.[0]?.url ||
+                    "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=900&q=80"
+                  }
+                  alt={`${p.first_name}'s profile`}
+                  watermarkText={p.photos?.[0]?.watermark || "MA'AAK VERIFIED"}
+                  className="h-full w-full"
+                />
+                <div className="absolute top-3 right-3 left-3 flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-[#3D362D] shadow-sm">
+                    <Star className="h-3 w-3 fill-[#A97C3F] text-[#A97C3F]" />
+                    Recommended
+                  </span>
+                  <span className="rounded-full bg-[#A97C3F] px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">
+                    {p.compatibility?.mutual_score ?? 88}% Match
+                  </span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between border-t border-[#FAF6F0] px-5 py-3.5">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleInteraction(p.id, "thumbs_up")}
-                    aria-label="Thumbs up"
-                    className="rounded-full border border-[#E5DEC9] p-2 hover:border-[#C59B5F]"
-                  >
-                    <ThumbsUp className="h-3.5 w-3.5 text-[#9C743C]" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleInteraction(p.id, "thumbs_down")}
-                    aria-label="Thumbs down"
-                    className="rounded-full border border-[#E5DEC9] p-2 hover:border-rose-400"
-                  >
-                    <ThumbsDown className="h-3.5 w-3.5 text-[#665C4E]" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleInteraction(p.id, "like")}
-                    aria-label="Like"
-                    className="rounded-full border border-[#E5DEC9] p-2 hover:border-[#C59B5F]"
-                  >
-                    <Heart className="h-3.5 w-3.5 text-rose-600" />
-                  </button>
+              <div className="flex flex-1 flex-col p-4">
+                <h3 className="font-serif text-lg font-bold text-[#201A14]">
+                  {p.first_name}
+                  {p.age ? `, ${p.age}` : ""}
+                </h3>
+                <p className="mt-1 flex items-start gap-1.5 text-[11px] leading-relaxed text-[#6B6155]">
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#A97C3F]" />
+                  <span>
+                    {p.city} ({p.postcode_area}) · {p.relationship_status} ·{" "}
+                    {p.has_children ? `Parent (${p.children_count})` : "No children"}
+                  </span>
+                </p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <span className="rounded-md bg-[#FAF6F0] px-2 py-0.5 text-[10px] text-[#665C4E]">
+                    {p.profession}
+                  </span>
+                  {p.religious_denomination && (
+                    <span className="rounded-md bg-[#FAF6F0] px-2 py-0.5 text-[10px] text-[#665C4E]">
+                      {p.religious_denomination}
+                    </span>
+                  )}
                 </div>
+                <p className="mt-3 line-clamp-2 text-[11px] leading-relaxed text-[#5C5346]">
+                  {p.short_bio}
+                </p>
+              </div>
 
+              <div className="mt-auto flex items-center justify-between gap-2 border-t border-[#EFE7DC] px-4 py-3.5">
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/profiles/${p.id}`}
-                    className="rounded-full border border-[#14110E] px-3.5 py-1.5 text-xs font-semibold text-[#1A1612]"
+                    className="rounded-full border border-[#E8E0D4] px-3.5 py-1.5 text-[11px] font-bold text-[#201A14]"
                   >
                     Profile
                   </Link>
                   <button
                     type="button"
                     onClick={() => handleSendRequest(p.id, p.first_name)}
-                    className="inline-flex items-center gap-1 rounded-full bg-[#14110E] px-3.5 py-1.5 text-xs font-semibold text-[#DFBE8A]"
+                    className="inline-flex items-center gap-1 rounded-full bg-[#A97C3F] px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#956B35]"
                   >
                     <Send className="h-3 w-3" />
                     <span>Intro</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleInteraction(p.id, "thumbs_up")}
+                    aria-label="Thumbs up"
+                    aria-pressed={p.my_action === "thumbs_up"}
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                      p.my_action === "thumbs_up"
+                        ? "border-[#2F8B4E] bg-[#DFF2E5]"
+                        : "border-[#BFE3C8] bg-[#F0FAF2] hover:bg-[#E2F5E7]"
+                    }`}
+                  >
+                    <ThumbsUp
+                      className={`h-3.5 w-3.5 text-[#2F8B4E] ${
+                        p.my_action === "thumbs_up" ? "fill-current" : ""
+                      }`}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleInteraction(p.id, "thumbs_down")}
+                    aria-label="Thumbs down"
+                    aria-pressed={p.my_action === "thumbs_down"}
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                      p.my_action === "thumbs_down"
+                        ? "border-[#C65B5B] bg-[#F9DFDF]"
+                        : "border-[#F2CBCB] bg-[#FEF3F3] hover:bg-[#FCE7E7]"
+                    }`}
+                  >
+                    <ThumbsDown
+                      className={`h-3.5 w-3.5 text-[#C65B5B] ${
+                        p.my_action === "thumbs_down" ? "fill-current" : ""
+                      }`}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBookmark(p.id)}
+                    aria-label={
+                      p.my_action === "bookmark"
+                        ? "Remove bookmark"
+                        : "Save profile"
+                    }
+                    aria-pressed={p.my_action === "bookmark"}
+                    title={
+                      p.my_action === "bookmark"
+                        ? "Remove bookmark"
+                        : "Save profile"
+                    }
+                    disabled={pendingBookmark === p.id}
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border transition disabled:opacity-50 ${
+                      p.my_action === "bookmark"
+                        ? "border-[#A97C3F] bg-[#F3E3CB] text-[#8B632F]"
+                        : "border-[#E8E0D4] bg-[#FBF7F2] text-[#A97C3F] hover:bg-[#F3EBDF]"
+                    }`}
+                  >
+                    <Bookmark
+                      className={`h-3.5 w-3.5 ${
+                        p.my_action === "bookmark" ? "fill-current" : ""
+                      }`}
+                    />
                   </button>
                 </div>
               </div>

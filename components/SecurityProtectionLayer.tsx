@@ -113,11 +113,15 @@ export function WatermarkedPhoto({
   alt,
   watermarkText = "MA'AAK VERIFIED VIEW",
   className = "",
+  fit = "cover",
+  showWatermark = true,
 }: {
   src: string;
   alt: string;
   watermarkText?: string;
   className?: string;
+  fit?: "cover" | "contain";
+  showWatermark?: boolean;
 }) {
   return (
     <div
@@ -129,23 +133,18 @@ export function WatermarkedPhoto({
         src={src}
         alt={alt}
         draggable={false}
-        className="h-full w-full object-cover"
+        className={`h-full w-full ${fit === "contain" ? "object-contain" : "object-cover"}`}
       />
-      {/* Subtle diagonal anti-scrape watermark overlay */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 flex flex-col items-center justify-between p-3 opacity-25"
-      >
-        <span className="self-end rounded bg-black/40 px-1.5 py-0.5 text-[9px] font-semibold tracking-widest text-white">
-          {watermarkText}
-        </span>
-        <span className="-rotate-12 text-[10px] font-bold tracking-[0.22em] text-white drop-shadow">
-          {watermarkText}
-        </span>
-        <span className="self-start text-[8px] font-medium tracking-widest text-white/80">
-          DO NOT SCREENSHOT
-        </span>
-      </div>
+      {showWatermark && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-end p-2"
+        >
+          <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold tracking-widest text-white/90">
+            {watermarkText}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
