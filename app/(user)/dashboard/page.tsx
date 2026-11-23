@@ -3,16 +3,19 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  ShieldCheck,
-  Users,
-  Lock,
-  Check,
-  MessageCircle,
-  Sparkles,
-  Crown,
   ArrowRight,
-  RefreshCw,
+  Bookmark,
+  Check,
+  Crown,
+  HeartHandshake,
+  Lock,
+  MapPin,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  ThumbsDown,
   ThumbsUp,
+  Users,
 } from "lucide-react";
 import { WatermarkedPhoto } from "@/components/SecurityProtectionLayer";
 
@@ -25,10 +28,12 @@ interface MatchItem {
   city: string;
   postcode_area: string;
   profession: string;
+  relationship_status?: string | null;
   has_children: boolean;
   children_count: string;
   short_bio: string;
   photos: { id: string; url: string; watermark?: string }[];
+  my_action?: string | null;
   compatibility?: {
     mutual_score: number;
     is_gale_shapley_optimal?: boolean;
@@ -37,13 +42,26 @@ interface MatchItem {
   };
 }
 
+type InteractionAction = "thumbs_up" | "thumbs_down" | "bookmark";
+
+const DEFAULT_REASONS = [
+  "Similar relationship goals",
+  "Aligned values and faith",
+  "Compatible family plans",
+];
+
+const NEXT_STEPS = [
+  { label: "Complete your profile", href: "/profile/wizard" },
+  { label: "Explore your matches", href: "/explore" },
+  { label: "Send an introduction", href: "/requests" },
+];
+
 export default function UserDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [meData, setMeData] = useState<Record<string, unknown> | null>(null);
   const [recommended, setRecommended] = useState<MatchItem[]>([]);
-  const [topMatch, setTopMatch] = useState<MatchItem | null>(null);
-  const [recalculating, setRecalculating] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
 
   async function loadDashboard() {
     setLoading(true);
@@ -59,7 +77,6 @@ export default function UserDashboardPage() {
       if (recRes.ok) {
         const recJson = await recRes.json();
         setRecommended(recJson.data?.recommended || []);
-        setTopMatch(recJson.data?.topMatch || null);
       }
     } finally {
       setLoading(false);
@@ -70,354 +87,529 @@ export default function UserDashboardPage() {
     loadDashboard();
   }, []);
 
-  async function handleRecalculate() {
-    setRecalculating(true);
-    const res = await fetch("/api/v1/matches/recalculate", { method: "POST" });
-    if (res.ok) {
-      setToast("Gale-Shapley stable matches recalculated!");
-      await loadDashboard();
-    }
-    setRecalculating(false);
-    setTimeout(() => setToast(null), 4000);
+  function showToast(message: string) {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
   }
 
-  async function handleLike(targetId: string) {
-    const res = await fetch(`/api/v1/profiles/${targetId}/like`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "like" }),
-    });
-    if (res.ok) {
-      setToast("Saved to your liked profiles!");
-      setTimeout(() => setToast(null), 3000);
+  async function handleInteraction(
+    targetId: string,
+    action: InteractionAction,
+  ): Promise<boolean> {
+    const key = `${targetId}-${action}`;
+    setPendingAction(key);
+
+    try {
+      const isPass = action === "thumbs_down";
+      const res = await fetch(
+        `/api/v1/profiles/${targetId}/${isPass ? "dislike" : "like"}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        },
+      );
+
+      if (res.ok) {
+        const messages: Record<InteractionAction, string> = {
+          thumbs_up: "Added to your liked profiles.",
+          thumbs_down: "Thanks, we’ll show you different matches.",
+          bookmark: "Saved to your bookmarks.",
+        };
+        showToast(messages[action]);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      setPendingAction(null);
     }
   }
 
   if (loading) {
     return (
-      <div className="space-y-6 py-8">
-        <div className="h-28 animate-pulse rounded-3xl bg-[#EFE8DC]" />
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="h-80 animate-pulse rounded-3xl bg-[#EFE8DC]" />
-          <div className="h-80 animate-pulse rounded-3xl bg-[#EFE8DC]" />
-          <div className="h-80 animate-pulse rounded-3xl bg-[#EFE8DC]" />
+      <div className="space-y-7">
+        <div className="h-24 animate-pulse rounded-2xl bg-[#F0E8DC]" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[0, 1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="h-40 animate-pulse rounded-2xl bg-[#F0E8DC]"
+            />
+          ))}
+        </div>
+        <div className="h-28 animate-pulse rounded-2xl bg-[#F0E8DC]" />
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {[0, 1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="h-[30rem] animate-pulse rounded-2xl bg-[#F0E8DC]"
+            />
+          ))}
         </div>
       </div>
     );
   }
 
   const user = (meData?.user || {}) as Record<string, unknown>;
-  const completion = (meData?.completion || { percentage: 0 }) as {
+  const completion = (meData?.completion || { percentage: 35 }) as {
     percentage: number;
-    hasMinimumPhotos?: boolean;
   };
   const entitlements = (meData?.entitlements || {}) as {
     planName?: string;
-    planSlug?: string;
     isTrial?: boolean;
-    introductionRequestsRemaining?: number | null;
-    maxIntroductionRequests?: number | null;
   };
-  const activeChatsCount = Number(meData?.activeChatsCount || 0);
-
-  const highlightMatch = topMatch || recommended[0] || null;
-  const highlightScore = highlightMatch?.compatibility?.mutual_score || 92;
-  const highlightReasons = highlightMatch?.compatibility?.match_reasons || [
-    "Similar family values",
-    "Aligned relationship goals",
-    "Compatible lifestyle and interests",
-  ];
+  const rawPercentage = Number(completion.percentage);
+  const completionPercentage = Math.min(
+    100,
+    Math.max(0, Number.isFinite(rawPercentage) ? rawPercentage : 35),
+  );
+  const firstName = user.first_name ? String(user.first_name) : "Amina";
+  const planName = String(entitlements.planName || "Premium Membership");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-7 bg-[#FBF7F2]">
       {toast && (
-        <div className="fixed right-6 bottom-20 z-50 rounded-full border border-[#C59B5F] bg-[#14110E] px-5 py-3 text-xs font-semibold text-[#DFBE8A] shadow-xl">
+        <div className="fixed right-6 bottom-20 z-50 rounded-full border border-[#A97C3F] bg-[#17130F] px-5 py-3 text-xs font-semibold text-[#E8CDA3] shadow-xl">
           {toast}
         </div>
       )}
 
-      {/* Header matching Mock1.png */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-4xl font-semibold text-[#1A1612]">
-            Welcome to <span className="text-[#9C743C]">Ma&apos;aak</span>
-            {user.first_name ? `, ${String(user.first_name)}` : ""}
-          </h1>
-          <p className="mt-1 text-sm text-[#5C5346]">
-            A meaningful space for single parents &amp; marriage-minded Muslims
-            to find a compatible partner.
-          </p>
-        </div>
+      <header>
+        <h1 className="font-serif text-3xl font-bold tracking-tight text-[#201A14] sm:text-4xl">
+          Welcome back, {firstName}
+        </h1>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#6B6155]">
+          A meaningful space for people who share your values, relationship
+          goals and vision for the future.
+        </p>
+      </header>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={handleRecalculate}
-            disabled={recalculating}
-            className="inline-flex items-center gap-2 rounded-full border border-[#C59B5F] bg-white px-4 py-2 text-xs font-semibold text-[#1A1612] shadow-xs hover:bg-[#FAF6F0]"
-          >
-            <RefreshCw
-              className={`h-3.5 w-3.5 text-[#9C743C] ${
-                recalculating ? "animate-spin" : ""
-              }`}
-            />
-            <span>Recalculate Gale-Shapley Matches</span>
-          </button>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="flex flex-col rounded-2xl border border-[#E8E0D4] bg-white p-5 shadow-[0_8px_24px_rgba(64,45,22,0.05)]">
+          <div className="flex items-center gap-4">
+            <div
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full"
+              style={{
+                background: `conic-gradient(#A97C3F ${completionPercentage}%, #EFE7DC 0)`,
+              }}
+            >
+              <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-white">
+                <span className="font-serif text-lg font-bold text-[#A97C3F]">
+                  {completionPercentage}%
+                </span>
+              </div>
+            </div>
+            <div>
+              <h2 className="font-serif text-base font-bold text-[#201A14]">
+                Complete Your Profile
+              </h2>
+              <p className="mt-1 text-xs leading-relaxed text-[#6B6155]">
+                Add a few more details so the right people can find you.
+              </p>
+            </div>
+          </div>
           <Link
             href="/profile/wizard"
-            className="inline-flex items-center gap-2 rounded-full bg-[#14110E] px-5 py-2 text-xs font-semibold text-[#DFBE8A]"
+            className="mt-auto inline-flex items-center justify-center gap-1.5 self-start rounded-full bg-[#A97C3F] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#956B35]"
           >
-            <span>Profile {completion.percentage}% Complete</span>
+            Complete My Profile
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-      </div>
 
-      {/* 3 Trust Cards matching Mock1.png */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="flex items-start gap-3.5 rounded-2xl border border-[#E5DEC9] bg-white p-5 shadow-xs">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FAF6F0] text-[#9C743C]">
+        <InfoCard
+          icon={<ShieldCheck className="h-5 w-5" />}
+          title="Verified members"
+          description="Every member completes identity and age verification before connecting."
+        />
+        <InfoCard
+          icon={<Users className="h-5 w-5" />}
+          title="Meet genuine members"
+          description="Connect with people who share your values, faith and relationship goals."
+        />
+        <InfoCard
+          icon={<Lock className="h-5 w-5" />}
+          title="A safe & private space"
+          description="Your information is protected and never shared outside our platform."
+        />
+      </section>
+
+      <section className="relative overflow-hidden rounded-2xl bg-[#17130F] px-6 py-5 shadow-[0_12px_30px_rgba(33,23,13,0.14)]">
+        <svg
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 h-full w-2/3 opacity-[0.16]"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <pattern
+              id="membership-pattern"
+              width="42"
+              height="42"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(45)"
+            >
+              <path
+                d="M21 1 41 21 21 41 1 21Z M21 9 33 21 21 33 9 21Z M21 16 26 21 21 26 16 21Z"
+                fill="none"
+                stroke="#E8CDA3"
+                strokeWidth="1"
+              />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#membership-pattern)" />
+        </svg>
+
+        <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#E8CDA3]/30 bg-[#E8CDA3]/10">
+              <Crown className="h-5 w-5 text-[#E8CDA3]" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-semibold text-[#E8CDA3]">
+                  Current Plan: {planName}
+                  {entitlements.isTrial ? " · Free Trial" : ""}
+                </p>
+                <span className="rounded-full border border-[#A97C3F]/50 bg-[#A97C3F]/15 px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#E8CDA3]">
+                  Active
+                </span>
+              </div>
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-white/65">
+                Unlock more matches, priority visibility and extra features
+                designed to help you connect with confidence.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/subscription"
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-full bg-[#E8CDA3] px-5 py-2.5 text-xs font-bold text-[#201A14] transition hover:bg-[#F2DDBB] lg:self-auto"
+          >
+            Manage Membership
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="font-serif text-2xl font-bold text-[#201A14]">
+                Recommended for you
+              </h2>
+              <p className="mt-1 text-xs text-[#6B6155]">
+                Handpicked matches based on your preferences and compatibility.
+              </p>
+            </div>
+            <Link
+              href="/explore"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A97C3F] transition hover:underline"
+            >
+              View all matches
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          <div className="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {recommended.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-[#E8E0D4] bg-white p-10 text-center shadow-[0_8px_24px_rgba(64,45,22,0.05)] sm:col-span-2 xl:col-span-3">
+                <Sparkles className="mx-auto h-8 w-8 text-[#A97C3F]" />
+                <h3 className="mt-3 font-serif text-xl font-bold text-[#201A14]">
+                  Your matches are on their way
+                </h3>
+                <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-[#6B6155]">
+                  Complete your profile and preferences to receive thoughtful
+                  recommendations based on your values and relationship goals.
+                </p>
+                <Link
+                  href="/profile/wizard"
+                  className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-[#A97C3F] px-5 py-2.5 text-xs font-semibold text-white"
+                >
+                  Complete My Profile
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            ) : (
+              recommended.slice(0, 3).map((match) => (
+                <MatchCard
+                  key={match.id}
+                  match={match}
+                  pendingAction={pendingAction}
+                  onInteract={handleInteraction}
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        <aside className="flex flex-col rounded-2xl border border-[#E8E0D4] bg-[#F5EEE4] p-5 shadow-[0_8px_24px_rgba(64,45,22,0.04)] lg:sticky lg:top-6 lg:self-start">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#A97C3F] shadow-sm">
+            <HeartHandshake className="h-6 w-6" />
+          </div>
+          <h3 className="mt-4 font-serif text-lg font-bold leading-snug text-[#201A14]">
+            Built for meaningful connections
+          </h3>
+          <p className="mt-2 text-xs leading-relaxed text-[#6B6155]">
+            Meet people who are here with intention, honesty and the hope of
+            building a future that honours shared values.
+          </p>
+
+          <div className="mt-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#A97C3F]">
+              Your next steps
+            </p>
+            <div className="mt-3 space-y-2.5">
+              {NEXT_STEPS.map((step, index) => (
+                <Link
+                  key={step.href}
+                  href={step.href}
+                  className="flex items-center gap-3 rounded-xl bg-white/70 px-3 py-2.5 transition hover:bg-white"
+                >
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#A97C3F] text-[11px] font-bold text-white">
+                    {index + 1}
+                  </span>
+                  <span className="flex-1 text-xs font-semibold text-[#3D362D]">
+                    {step.label}
+                  </span>
+                  <ArrowRight className="h-3.5 w-3.5 text-[#A97C3F]" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-2xl border border-[#E8E0D4] bg-[#F5EEE4] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#A97C3F] shadow-sm">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-[#1A1612]">
-              Verified members
-            </h3>
-            <p className="mt-0.5 text-xs text-[#665C4E]">
-              Didit Identity &amp; age checked
+            <h2 className="font-serif text-lg font-bold text-[#201A14]">
+              A Community Built on Trust
+            </h2>
+            <p className="mt-1 text-xs text-[#6B6155]">
+              Every member completes identity and age checks, so you can
+              connect with confidence.
             </p>
           </div>
         </div>
+        <Link
+          href="/verification"
+          className="inline-flex shrink-0 items-center gap-1.5 self-start text-xs font-semibold text-[#A97C3F] underline underline-offset-4 hover:text-[#8D6735] sm:self-auto"
+        >
+          Learn more about our safety measures
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </section>
+    </div>
+  );
+}
 
-        <div className="flex items-start gap-3.5 rounded-2xl border border-[#E5DEC9] bg-white p-5 shadow-xs">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FAF6F0] text-[#9C743C]">
-            <Users className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-[#1A1612]">
-              Single-parent focused
-            </h3>
-            <p className="mt-0.5 text-xs text-[#665C4E]">
-              Meet people who understand family life
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3.5 rounded-2xl border border-[#E5DEC9] bg-white p-5 shadow-xs">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FAF6F0] text-[#9C743C]">
-            <Lock className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-[#1A1612]">
-              A safer experience
-            </h3>
-            <p className="mt-0.5 text-xs text-[#665C4E]">
-              Active Chats: {String(activeChatsCount)}/3 • Copy &amp; screenshot
-              deterrents
-            </p>
-          </div>
-        </div>
+function InfoCard({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex flex-col rounded-2xl border border-[#E8E0D4] bg-white p-5 shadow-[0_8px_24px_rgba(64,45,22,0.05)]">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FBF4EA] text-[#A97C3F]">
+        {icon}
       </div>
+      <h2 className="mt-4 font-serif text-base font-bold text-[#201A14]">
+        {title}
+      </h2>
+      <p className="mt-1 text-xs leading-relaxed text-[#6B6155]">
+        {description}
+      </p>
+    </div>
+  );
+}
 
-      {/* Subscription & Verification Status Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#C59B5F]/40 bg-[#14110E] px-6 py-4 text-xs text-[#FAF6F0]">
-        <div className="flex items-center gap-3">
-          <Crown className="h-4 w-4 text-[#DFBE8A]" />
-          <span>
-            Current Plan: <strong className="text-[#DFBE8A]">{entitlements.planName || "Free Membership"}</strong>
-            {entitlements.isTrial && " (1st Month Free Trial Active)"}
-            {entitlements.maxIntroductionRequests !== null &&
-              entitlements.maxIntroductionRequests !== undefined &&
-              ` • ${entitlements.introductionRequestsRemaining} of ${entitlements.maxIntroductionRequests} Free Intro Requests Remaining`}
+function MatchCard({
+  match,
+  pendingAction,
+  onInteract,
+}: {
+  match: MatchItem;
+  pendingAction: string | null;
+  onInteract: (
+    targetId: string,
+    action: InteractionAction,
+  ) => Promise<boolean>;
+}) {
+  const [currentAction, setCurrentAction] = useState<string | null>(
+    match.my_action ?? null,
+  );
+  const isBookmarked = currentAction === "bookmark";
+  const photoUrl =
+    match.photos?.[0]?.url ||
+    "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=900&q=80";
+  const rawScore = Number(match.compatibility?.mutual_score);
+  const score = Number.isFinite(rawScore) ? Math.round(rawScore) : 90;
+  const reasons =
+    match.compatibility?.match_reasons?.length &&
+    match.compatibility.match_reasons.length > 0
+      ? match.compatibility.match_reasons.slice(0, 3)
+      : DEFAULT_REASONS;
+  const location = match.city || match.postcode_area || "Location private";
+  const relationshipStatus = match.relationship_status || "Never married";
+  const hasChildren = Boolean(match.has_children);
+  const childrenLabel = hasChildren
+    && match.children_count
+    && match.children_count !== "0"
+    && match.children_count !== "None"
+    ? `${match.children_count} children`
+      : hasChildren
+        ? "Has children"
+        : "No children";
+
+  async function runAction(action: InteractionAction) {
+    const saved = await onInteract(match.id, action);
+    if (saved) setCurrentAction(action);
+  }
+
+  return (
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-[#E8E0D4] bg-white shadow-[0_8px_24px_rgba(64,45,22,0.05)] transition hover:shadow-[0_14px_32px_rgba(64,45,22,0.1)]">
+      <div className="relative aspect-[4/5] w-full overflow-hidden">
+        <WatermarkedPhoto
+          src={photoUrl}
+          alt={`${match.first_name}'s profile`}
+          watermarkText={match.photos?.[0]?.watermark || "MA'AAK VERIFIED"}
+          className="h-full w-full"
+        />
+        <div className="absolute top-3 right-3 left-3 flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-[#3D362D] shadow-sm">
+            <Star className="h-3 w-3 fill-[#A97C3F] text-[#A97C3F]" />
+            Recommended
+          </span>
+          <span className="rounded-full bg-[#A97C3F] px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">
+            {score}% Match
           </span>
         </div>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/preferences"
-            className="font-semibold text-[#DFBE8A] underline"
-          >
-            Manage 5 Dealbreakers
-          </Link>
-          <Link
-            href="/subscription"
-            className="rounded-full bg-[#C59B5F] px-3.5 py-1 font-bold text-[#14110E]"
-          >
-            Manage Plan
-          </Link>
-        </div>
       </div>
 
-      {/* Recommended for You Section matching Mock1.png */}
-      <div>
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-2xl font-semibold text-[#1A1612]">
-            Recommended for you
-          </h2>
-          <Link
-            href="/explore"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#9C743C] hover:underline"
-          >
-            <span>See all matches</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="font-serif text-lg font-bold text-[#201A14]">
+          {match.first_name}
+          {match.age ? `, ${match.age}` : ""}
+        </h3>
+        <p className="mt-1 flex items-start gap-1.5 text-[11px] leading-relaxed text-[#6B6155]">
+          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#A97C3F]" />
+          <span>
+            {location} · {relationshipStatus} · {childrenLabel}
+          </span>
+        </p>
 
-        {recommended.length === 0 ? (
-          <div className="mt-4 rounded-3xl border border-[#E5DEC9] bg-white p-10 text-center">
-            <Sparkles className="mx-auto h-8 w-8 text-[#9C743C]" />
-            <h3 className="mt-3 font-serif text-xl font-semibold text-[#1A1612]">
-              Complete Your Profile or Sign In to View Personalised Matches
-            </h3>
-            <p className="mx-auto mt-1 max-w-md text-xs text-[#665C4E]">
-              Our Gale-Shapley engine filters out dealbreaker mismatches first
-              to show you only mutually eligible marriage candidates.
-            </p>
-            <div className="mt-5 flex justify-center gap-3">
-              <Link
-                href="/profile/wizard"
-                className="rounded-full bg-[#14110E] px-5 py-2.5 text-xs font-semibold text-[#DFBE8A]"
+        <div className="mt-4">
+          <p className="text-[11px] font-bold text-[#201A14]">
+            Why you may connect
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {reasons.map((reason, index) => (
+              <li
+                key={`${reason}-${index}`}
+                className="flex items-start gap-2 text-[11px] leading-snug text-[#5C5346]"
               >
-                Open Profile Wizard
-              </Link>
-              <Link
-                href="/login"
-                className="rounded-full border border-[#C59B5F] px-5 py-2.5 text-xs font-semibold text-[#1A1612]"
-              >
-                Switch Account
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {recommended.slice(0, 6).map((m) => {
-              const photoUrl =
-                m.photos?.[0]?.url ||
-                "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=900&q=80";
-              const score = m.compatibility?.mutual_score ?? 90;
-              const isGsOptimal = Boolean(
-                m.compatibility?.is_gale_shapley_optimal,
-              );
-
-              return (
-                <div
-                  key={m.id}
-                  className="group overflow-hidden rounded-3xl border border-[#E5DEC9] bg-white shadow-sm transition hover:shadow-md"
-                >
-                  <div className="relative h-80 w-full">
-                    <WatermarkedPhoto
-                      src={photoUrl}
-                      alt={m.first_name}
-                      watermarkText={
-                        m.photos?.[0]?.watermark || "MA'AAK VERIFIED"
-                      }
-                      className="h-full w-full"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                    {/* Top Badges */}
-                    <div className="absolute top-3.5 right-3.5 left-3.5 flex items-center justify-between">
-                      {m.id_verified ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1 text-[11px] font-semibold text-[#1A1612] shadow">
-                          <ShieldCheck className="h-3.5 w-3.5 text-[#9C743C]" />
-                          Verified
-                        </span>
-                      ) : (
-                        <span />
-                      )}
-
-                      {isGsOptimal && (
-                        <span className="rounded-full bg-[#14110E]/90 px-3 py-1 text-[10px] font-semibold text-[#DFBE8A] border border-[#C59B5F]/50">
-                          Gale-Shapley #1
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Bottom Overlay Info matching Mock1.png */}
-                    <div className="absolute right-4 bottom-4 left-4 flex items-end justify-between text-white">
-                      <div>
-                        <h3 className="font-serif text-2xl font-semibold">
-                          {m.first_name}
-                          {m.age ? `, ${m.age}` : ""}
-                        </h3>
-                        <p className="text-xs text-white/85">
-                          {m.has_children
-                            ? `Parent of ${m.children_count}`
-                            : m.profession || m.city}
-                          {m.city ? ` • ${m.city}` : ""}
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-[#B58E53] px-3 py-1 text-xs font-bold text-white shadow">
-                        {score}% Match
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2 p-4">
-                    <Link
-                      href={`/profiles/${m.id}`}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#14110E] py-2.5 text-xs font-semibold text-[#FAF6F0] transition hover:bg-[#2A221B]"
-                    >
-                      <MessageCircle className="h-3.5 w-3.5 text-[#DFBE8A]" />
-                      <span>View Profile &amp; Connect</span>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleLike(m.id)}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-[#E5DEC9] bg-[#FAF6F0] px-4 py-2.5 text-xs font-semibold text-[#1A1612] hover:border-[#C59B5F]"
-                    >
-                      <ThumbsUp className="h-3.5 w-3.5 text-[#9C743C]" />
-                      <span>Like</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Bottom Compatibility & Single-Parent Cards matching Mock1.png */}
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="flex flex-col items-center gap-6 rounded-3xl border border-[#E5DEC9] bg-white p-7 shadow-xs sm:flex-row lg:col-span-7">
-          <div className="flex h-28 w-28 shrink-0 flex-col items-center justify-center rounded-full border-[6px] border-[#B58E53] bg-[#FAF6F0]">
-            <span className="font-serif text-3xl font-bold text-[#1A1612]">
-              {highlightScore}%
-            </span>
-          </div>
-          <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-[#9C743C]">
-              Your Compatibility
-              {highlightMatch ? ` with ${highlightMatch.first_name}` : ""}
-            </div>
-            <h3 className="mt-1 font-serif text-xl font-semibold text-[#1A1612]">
-              Why this is a great match
-            </h3>
-            <ul className="mt-3 space-y-1.5 text-xs text-[#3D362D]">
-              {highlightReasons.map((reason, idx) => (
-                <li key={idx} className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-[#9C743C]" />
-                  <span>{reason}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#A97C3F]" />
+                <span>{reason}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="flex items-center gap-5 rounded-3xl border border-[#E5DEC9] bg-[#F2EBE0] p-7 lg:col-span-5">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-[#9C743C] shadow-xs">
-            <Users className="h-7 w-7" />
-          </div>
-          <div>
-            <h3 className="font-serif text-xl font-semibold text-[#1A1612]">
-              Tailored for single parents
-            </h3>
-            <p className="mt-1 text-xs leading-relaxed text-[#5C5346]">
-              Find someone who understands your family life, parenting
-              commitments, and future household goals.
-            </p>
-          </div>
+        <div className="mt-auto flex items-center gap-2 pt-5">
+          <Link
+            href={`/profiles/${match.id}`}
+            className="flex flex-1 items-center justify-center rounded-full bg-[#A97C3F] px-3 py-2.5 text-[11px] font-bold text-white transition hover:bg-[#956B35]"
+          >
+            View Profile
+          </Link>
+          <ActionButton
+            label="Like"
+            pending={pendingAction === `${match.id}-thumbs_up`}
+            pressed={currentAction === "thumbs_up"}
+            onClick={() => {
+              void runAction("thumbs_up");
+            }}
+            className="border-[#BFE3C8] bg-[#F0FAF2] text-[#2F8B4E] hover:bg-[#E2F5E7]"
+          >
+            <ThumbsUp
+              className={`h-3.5 w-3.5 ${
+                currentAction === "thumbs_up" ? "fill-current" : ""
+              }`}
+            />
+          </ActionButton>
+          <ActionButton
+            label="Pass"
+            pending={pendingAction === `${match.id}-thumbs_down`}
+            pressed={currentAction === "thumbs_down"}
+            onClick={() => {
+              void runAction("thumbs_down");
+            }}
+            className="border-[#F2CBCB] bg-[#FEF3F3] text-[#C65B5B] hover:bg-[#FCE7E7]"
+          >
+            <ThumbsDown
+              className={`h-3.5 w-3.5 ${
+                currentAction === "thumbs_down" ? "fill-current" : ""
+              }`}
+            />
+          </ActionButton>
+          <ActionButton
+            label={isBookmarked ? "Saved to bookmarks" : "Bookmark"}
+            pending={pendingAction === `${match.id}-bookmark`}
+            pressed={isBookmarked}
+            onClick={() => {
+              void runAction("bookmark");
+            }}
+            className={
+              isBookmarked
+                ? "border-[#A97C3F] bg-[#F3E3CB] text-[#8B632F]"
+                : "border-[#E8E0D4] bg-[#FBF7F2] text-[#A97C3F] hover:bg-[#F3EBDF]"
+            }
+          >
+            <Bookmark
+              className={`h-3.5 w-3.5 ${isBookmarked ? "fill-current" : ""}`}
+            />
+          </ActionButton>
         </div>
       </div>
-    </div>
+    </article>
+  );
+}
+
+function ActionButton({
+  label,
+  pending,
+  pressed,
+  onClick,
+  className,
+  children,
+}: {
+  label: string;
+  pending: boolean;
+  pressed?: boolean;
+  onClick: () => void;
+  className: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={pressed}
+      title={label}
+      disabled={pending}
+      onClick={onClick}
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition disabled:opacity-50 ${className}`}
+    >
+      {children}
+    </button>
   );
 }

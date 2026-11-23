@@ -69,7 +69,7 @@ export function UserShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#FAF6F0] text-[#1A1612]">
+    <div className="flex min-h-screen bg-[#FBF7F2] text-[#1A1612]">
       {/* Desktop Left Sidebar matching Mock1.png */}
       <aside className="hidden w-72 shrink-0 flex-col justify-between bg-[#14110E] text-[#FAF6F0] lg:flex">
         <div>
@@ -157,7 +157,9 @@ export function UserShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <main
-          className={`mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6 lg:px-8 ${
+          className={`mx-auto w-full flex-1 px-4 sm:px-6 lg:px-8 ${
+            pathname === "/dashboard" ? "max-w-none" : "max-w-6xl"
+          } ${
             pathname === "/matches"
               ? "pt-0 pb-20 lg:pt-8 lg:pb-6"
               : "py-6 pb-20 lg:pb-0"

@@ -35,7 +35,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={poppins.variable}>
-      <body className="min-h-screen bg-[#FAF6F0] text-black antialiased">
+      <body className="min-h-screen bg-[#FBF7F2] text-black antialiased">
         <SecurityProtectionLayer>
           {children}
           <CookieConsent content={cookieConsent} />

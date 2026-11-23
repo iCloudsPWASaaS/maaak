@@ -6,13 +6,13 @@
   --maaak-gold: #c59b5f;
   --maaak-gold-light: #dfbe8a;
   --maaak-gold-dark: #9c743c;
-  --maaak-cream: #faf6f0;
+  --maaak-cream: #fbf7f2;
   --maaak-sand: #f2ebe0;
   --maaak-border: #e5dec9;
   --maaak-ink: #000000;
   --maaak-muted: #665c4e;
   --font-sans: var(--font-poppins), "Poppins", system-ui, sans-serif;
-  --font-serif: var(--font-poppins), "Poppins", sans-serif;
+  --font-serif: "Georgia", "Times New Roman", serif;
 }
 
 html,
