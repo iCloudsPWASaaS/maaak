@@ -63,6 +63,7 @@ export default function RecommendedMatchesPage() {
   const [topMatch, setTopMatch] = useState<MatchCardItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
+  const [pendingBookmark, setPendingBookmark] = useState<string | null>(null);
 
   async function loadMatches() {
     setLoading(true);
@@ -99,6 +100,41 @@ export default function RecommendedMatchesPage() {
     }
   }
 
+  async function handleBookmark(targetId: string) {
+    setPendingBookmark(targetId);
+
+    try {
+      const res = await fetch(`/api/v1/profiles/${targetId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "bookmark" }),
+      });
+
+      if (!res.ok) return;
+
+      const json = await res.json();
+      const removed = Boolean(json.data?.removed);
+      const nextAction = removed ? null : "bookmark";
+
+      setMatches((current) =>
+        current.map((match) =>
+          match.id === targetId ? { ...match, my_action: nextAction } : match,
+        ),
+      );
+      setTopMatch((current) =>
+        current?.id === targetId
+          ? { ...current, my_action: nextAction }
+          : current,
+      );
+      setToast(removed ? "Removed from bookmarks." : "Saved to your bookmarks.");
+      setTimeout(() => setToast(null), 3000);
+    } catch {
+      return;
+    } finally {
+      setPendingBookmark(null);
+    }
+  }
+
   async function handleSendIntro(targetId: string, name: string) {
     const res = await fetch("/api/v1/requests", {
       method: "POST",
@@ -113,6 +149,7 @@ export default function RecommendedMatchesPage() {
     setTimeout(() => setToast(null), 4000);
   }
 
+  const mobileBookmarked = topMatch?.my_action === "bookmark";
   const mobileScore = topMatch?.compatibility?.mutual_score ?? 92;
   const mobileIntention = topMatch?.looking_for_intention || "Marriage";
   const mobileParenthood = topMatch?.has_children
@@ -173,14 +210,20 @@ export default function RecommendedMatchesPage() {
               </div>
               <button
                 type="button"
-                aria-label="Save profile"
-                onClick={() => {
-                  setToast("Profile saved!");
-                  setTimeout(() => setToast(null), 2500);
-                }}
-                className="absolute top-4 right-4 rounded-full border border-white/30 bg-black/40 p-2.5 text-white backdrop-blur"
+                aria-label={mobileBookmarked ? "Remove bookmark" : "Save profile"}
+                aria-pressed={mobileBookmarked}
+                title={mobileBookmarked ? "Remove bookmark" : "Save profile"}
+                disabled={pendingBookmark === topMatch.id}
+                onClick={() => handleBookmark(topMatch.id)}
+                className={`absolute top-4 right-4 rounded-full border p-2.5 text-white backdrop-blur disabled:opacity-50 ${
+                  mobileBookmarked
+                    ? "border-[#DFBE8A] bg-[#C59B5F]"
+                    : "border-white/30 bg-black/40"
+                }`}
               >
-                <Bookmark className="h-4 w-4" />
+                <Bookmark
+                  className={`h-4 w-4 ${mobileBookmarked ? "fill-current" : ""}`}
+                />
               </button>
               <div className="absolute right-5 bottom-6 left-5 text-white">
                 <div className="flex items-center gap-2">
@@ -477,6 +520,22 @@ export default function RecommendedMatchesPage() {
               </div>
 
               <div className="flex items-center justify-between gap-2 border-t border-[#FAF6F0] px-5 py-3.5">
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/profiles/${m.id}`}
+                    className="rounded-full border border-[#14110E] px-3.5 py-1.5 text-xs font-semibold text-[#1A1612]"
+                  >
+                    Details
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleSendIntro(m.id, m.first_name)}
+                    className="rounded-full bg-[#14110E] px-3.5 py-1.5 text-xs font-semibold text-[#DFBE8A]"
+                  >
+                    Send Intro
+                  </button>
+                </div>
+
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -496,27 +555,30 @@ export default function RecommendedMatchesPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleAction(m.id, "like")}
-                    title="Like Profile"
-                    className="rounded-full border border-[#E5DEC9] p-2 text-[#1A1612] hover:border-[#C59B5F]"
+                    onClick={() => handleBookmark(m.id)}
+                    aria-label={
+                      m.my_action === "bookmark"
+                        ? "Remove bookmark"
+                        : "Save profile"
+                    }
+                    aria-pressed={m.my_action === "bookmark"}
+                    title={
+                      m.my_action === "bookmark"
+                        ? "Remove bookmark"
+                        : "Save profile"
+                    }
+                    disabled={pendingBookmark === m.id}
+                    className={`rounded-full border p-2 disabled:opacity-50 ${
+                      m.my_action === "bookmark"
+                        ? "border-[#A97C3F] bg-[#F3E3CB] text-[#8B632F]"
+                        : "border-[#E5DEC9] text-[#9C743C] hover:border-[#C59B5F]"
+                    }`}
                   >
-                    <Heart className="h-3.5 w-3.5 text-rose-600" />
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/profiles/${m.id}`}
-                    className="rounded-full border border-[#14110E] px-3.5 py-1.5 text-xs font-semibold text-[#1A1612]"
-                  >
-                    Details
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => handleSendIntro(m.id, m.first_name)}
-                    className="rounded-full bg-[#14110E] px-3.5 py-1.5 text-xs font-semibold text-[#DFBE8A]"
-                  >
-                    Send Intro
+                    <Bookmark
+                      className={`h-3.5 w-3.5 ${
+                        m.my_action === "bookmark" ? "fill-current" : ""
+                      }`}
+                    />
                   </button>
                 </div>
               </div>

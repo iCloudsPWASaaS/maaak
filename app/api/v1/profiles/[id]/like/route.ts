@@ -34,6 +34,27 @@ export async function POST(
   }
 
   const sb = createAdminSupabaseClient();
+
+  if (action === "bookmark") {
+    const { data: existing } = await sb
+      .from("likes_dislikes")
+      .select("action")
+      .eq("user_id", user.id)
+      .eq("target_user_id", targetUserId)
+      .maybeSingle();
+
+    if (existing?.action === "bookmark") {
+      const { error: deleteError } = await sb
+        .from("likes_dislikes")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("target_user_id", targetUserId);
+
+      if (deleteError) return apiError(deleteError.message, 400);
+      return apiSuccess("Bookmark removed", { interaction: null, removed: true });
+    }
+  }
+
   const { data: row, error } = await sb
     .from("likes_dislikes")
     .upsert(
@@ -49,5 +70,8 @@ export async function POST(
 
   if (error) return apiError(error.message, 400);
 
-  return apiSuccess("Profile interaction recorded", { interaction: row });
+  return apiSuccess("Profile interaction recorded", {
+    interaction: row,
+    removed: false,
+  });
 }

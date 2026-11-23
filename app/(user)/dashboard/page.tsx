@@ -43,6 +43,7 @@ interface MatchItem {
 }
 
 type InteractionAction = "thumbs_up" | "thumbs_down" | "bookmark";
+type InteractionResult = "saved" | "removed" | null;
 
 const DEFAULT_REASONS = [
   "Similar relationship goals",
@@ -95,7 +96,7 @@ export default function UserDashboardPage() {
   async function handleInteraction(
     targetId: string,
     action: InteractionAction,
-  ): Promise<boolean> {
+  ): Promise<InteractionResult> {
     const key = `${targetId}-${action}`;
     setPendingAction(key);
 
@@ -110,18 +111,25 @@ export default function UserDashboardPage() {
         },
       );
 
-      if (res.ok) {
-        const messages: Record<InteractionAction, string> = {
-          thumbs_up: "Added to your liked profiles.",
-          thumbs_down: "Thanks, we’ll show you different matches.",
-          bookmark: "Saved to your bookmarks.",
-        };
-        showToast(messages[action]);
-        return true;
+      if (!res.ok) return null;
+
+      const json = await res.json();
+      const removed = action === "bookmark" && Boolean(json.data?.removed);
+
+      if (removed) {
+        showToast("Removed from bookmarks.");
+        return "removed";
       }
-      return false;
+
+      const messages: Record<InteractionAction, string> = {
+        thumbs_up: "Added to your liked profiles.",
+        thumbs_down: "Thanks, we’ll show you different matches.",
+        bookmark: "Saved to your bookmarks.",
+      };
+      showToast(messages[action]);
+      return "saved";
     } catch {
-      return false;
+      return null;
     } finally {
       setPendingAction(null);
     }
@@ -442,7 +450,7 @@ function MatchCard({
   onInteract: (
     targetId: string,
     action: InteractionAction,
-  ) => Promise<boolean>;
+  ) => Promise<InteractionResult>;
 }) {
   const [currentAction, setCurrentAction] = useState<string | null>(
     match.my_action ?? null,
@@ -471,8 +479,9 @@ function MatchCard({
         : "No children";
 
   async function runAction(action: InteractionAction) {
-    const saved = await onInteract(match.id, action);
-    if (saved) setCurrentAction(action);
+    const result = await onInteract(match.id, action);
+    if (result === "removed") setCurrentAction(null);
+    if (result === "saved") setCurrentAction(action);
   }
 
   return (
