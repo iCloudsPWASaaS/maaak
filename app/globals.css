@@ -30,6 +30,10 @@ h3,
   font-family: var(--font-poppins), "Poppins", sans-serif;
 }
 
+.notification-serif {
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+}
+
 /* Deterrents against copying, selecting, and dragging images */
 .maaak-protected {
   -webkit-user-select: none;
