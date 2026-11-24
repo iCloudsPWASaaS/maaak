@@ -19,13 +19,14 @@ export async function POST(
     return apiError("You cannot like your own profile.", 400);
   }
 
-  let action: "like" | "thumbs_up" | "bookmark" = "like";
+  let action: "like" | "thumbs_up" | "bookmark" | "none" = "like";
   try {
     const body = await req.json();
     if (
       body.action === "thumbs_up" ||
       body.action === "bookmark" ||
-      body.action === "like"
+      body.action === "like" ||
+      body.action === "none"
     ) {
       action = body.action;
     }
@@ -34,6 +35,17 @@ export async function POST(
   }
 
   const sb = createAdminSupabaseClient();
+
+  if (action === "none") {
+    const { error: deleteError } = await sb
+      .from("likes_dislikes")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("target_user_id", targetUserId);
+
+    if (deleteError) return apiError(deleteError.message, 400);
+    return apiSuccess("Interaction removed", { interaction: null, removed: true });
+  }
 
   if (action === "bookmark") {
     const { data: existing } = await sb

@@ -15,15 +15,29 @@ export async function POST(
   if (!user) return apiError("Unauthorized", 401);
 
   const { id: targetUserId } = await context.params;
-  let action: "dislike" | "thumbs_down" = "dislike";
+  let action: "dislike" | "thumbs_down" | "none" = "dislike";
   try {
     const body = await req.json();
-    if (body.action === "thumbs_down") action = "thumbs_down";
+    if (body.action === "thumbs_down" || body.action === "none") {
+      action = body.action;
+    }
   } catch {
     // Default "dislike"
   }
 
   const sb = createAdminSupabaseClient();
+
+  if (action === "none") {
+    const { error: deleteError } = await sb
+      .from("likes_dislikes")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("target_user_id", targetUserId);
+
+    if (deleteError) return apiError(deleteError.message, 400);
+    return apiSuccess("Interaction removed", { interaction: null, removed: true });
+  }
+
   const { data: row, error } = await sb
     .from("likes_dislikes")
     .upsert(
