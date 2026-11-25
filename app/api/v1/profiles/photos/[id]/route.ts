@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { apiError, apiOptionsResponse, apiSuccess } from "@/lib/api-response";
 import { getAuthenticatedUser } from "@/lib/auth-guard";
+import { deleteMediaFile } from "@/lib/storage";
 import { createAdminSupabaseClient } from "@/supabase/admin";
 
 export async function OPTIONS() {
@@ -29,6 +30,10 @@ export async function DELETE(
   }
 
   await sb.from("profile_photographs").delete().eq("id", id);
+
+  if (photo.storage_path && !photo.storage_path.startsWith("seed/")) {
+    await deleteMediaFile(photo.storage_path);
+  }
 
   const { data: remaining } = await sb
     .from("profile_photographs")

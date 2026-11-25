@@ -1,22 +1,11 @@
 import crypto from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
+import { getPgPool } from "../lib/pg-client.ts";
+import { createAdminSupabaseClient } from "../supabase/admin.ts";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
-const schema = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || "matrimony";
 const adminEmail = (process.env.ADMIN_EMAIL || "admin@maaak.co.uk").toLowerCase();
 const adminPassword = process.env.ADMIN_PASSWORD || "Maaak#Admin2026!";
 
-if (!url || !serviceKey) {
-  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.");
-  process.exit(1);
-}
-
-const sb = createClient(url, serviceKey, {
-  db: { schema },
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+const sb = createAdminSupabaseClient();
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -955,7 +944,13 @@ async function seedAdminAndSampleUsers() {
   console.log("\nAll seed operations completed successfully.");
 }
 
-seedAdminAndSampleUsers().catch((err) => {
-  console.error("Seed failed:", err);
-  process.exit(1);
-});
+seedAdminAndSampleUsers()
+  .catch((err) => {
+    console.error("Seed failed:", err);
+    process.exit(1);
+  })
+  .finally(async () => {
+    if (process.env.DATABASE_URL) {
+      await getPgPool().end();
+    }
+  });

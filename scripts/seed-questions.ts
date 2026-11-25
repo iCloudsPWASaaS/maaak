@@ -1,15 +1,8 @@
-import { createClient } from "@supabase/supabase-js";
+import { getPgPool } from "../lib/pg-client";
 import { WORKBOOK_QUESTIONS } from "../lib/workbook-catalog";
+import { createAdminSupabaseClient } from "../supabase/admin";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY!;
-const schema = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || "matrimony";
-
-const sb = createClient(url, serviceKey, {
-  db: { schema },
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+const sb = createAdminSupabaseClient();
 
 async function seedQuestions() {
   const { data: categories, error: catErr } = await sb
@@ -82,7 +75,13 @@ async function seedQuestions() {
   );
 }
 
-seedQuestions().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+seedQuestions()
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(async () => {
+    if (process.env.DATABASE_URL) {
+      await getPgPool().end();
+    }
+  });
