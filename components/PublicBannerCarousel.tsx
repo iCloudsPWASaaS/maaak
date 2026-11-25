@@ -20,6 +20,7 @@ const FALLBACK_SLIDE: BannerImage = {
 
 const FALLBACK_OVERLAY: BannerOverlay = {
   show: true,
+  eyebrow: "Halal Matrimony",
   title: "Find Your Perfect Match",
   subtitle: "A trusted matrimony community for Muslim single parents.",
   buttonText: "Create Your Profile",
@@ -83,7 +84,7 @@ export default function PublicBannerCarousel({
       {bannerOverlay.show && (
         <div className="public-hero-overlay">
           <div className="public-hero-overlay-content">
-            <span className="public-hero-eyebrow">Halal Matrimony</span>
+            <span className="public-hero-eyebrow">{bannerOverlay.eyebrow}</span>
             <h1>{bannerOverlay.title}</h1>
             <p>{bannerOverlay.subtitle}</p>
             <Link

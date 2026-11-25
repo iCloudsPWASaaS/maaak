@@ -11,6 +11,7 @@ export type BannerImage = {
 
 export type BannerOverlay = {
   show: boolean;
+  eyebrow: string;
   title: string;
   subtitle: string;
   buttonText: string;
@@ -59,6 +60,7 @@ const DEFAULT_FALLBACK = "/images/mock1.png";
 const DEFAULT_ALT = "Muslim matrimony banner";
 const DEFAULT_OVERLAY: BannerOverlay = {
   show: true,
+  eyebrow: "Halal Matrimony",
   title: "Find Your Perfect Match",
   subtitle: "A trusted matrimony community for Muslim single parents.",
   buttonText: "Create Your Profile",
@@ -85,6 +87,7 @@ function resolveOverlay(value: unknown): BannerOverlay {
 
   return {
     show: record.show !== false,
+    eyebrow: text("eyebrow"),
     title: text("title"),
     subtitle: text("subtitle"),
     buttonText: text("buttonText"),
