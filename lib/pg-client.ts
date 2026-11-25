@@ -17,9 +17,7 @@ types.setTypeParser(1700, (val: string) => (val === null ? null : Number(val)));
 types.setTypeParser(20, (val: string) => (val === null ? null : Number(val)));
 
 declare global {
-  // eslint-disable-next-line no-var
   var __maaakPgPool: Pool | undefined;
-  // eslint-disable-next-line no-var
   var __maaakPgPoolUrl: string | undefined;
 }
 
