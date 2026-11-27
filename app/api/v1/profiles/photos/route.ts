@@ -48,11 +48,11 @@ export async function POST(req: NextRequest) {
         ]);
       }
 
-      if (mediaType === "voice_bio" && durationSec > 30) {
+      if (mediaType === "voice_bio" && durationSec > 120) {
         return apiValidationError([
           {
             field: "durationSec",
-            message: "Voice bio cannot exceed 30 seconds.",
+            message: "Voice bio cannot exceed 120 seconds.",
           },
         ]);
       }
@@ -90,11 +90,11 @@ export async function POST(req: NextRequest) {
         ]);
       }
 
-      if (mediaType === "voice_bio" && durationSec > 30) {
+      if (mediaType === "voice_bio" && durationSec > 120) {
         return apiValidationError([
           {
             field: "durationSec",
-            message: "Voice bio cannot exceed 30 seconds.",
+            message: "Voice bio cannot exceed 120 seconds.",
           },
         ]);
       }
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
         .from("user_profiles")
         .update({
           voice_bio_url: photoUrl,
-          voice_bio_duration_sec: Math.min(30, Math.max(1, durationSec || 15)),
+          voice_bio_duration_sec: Math.min(120, Math.max(1, durationSec || 15)),
         })
         .eq("user_id", user.id)
         .select("*")

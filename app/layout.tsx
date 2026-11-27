@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Inter, Playfair_Display, Poppins } from "next/font/google";
 import "./globals.css";
 import { SecurityProtectionLayer } from "@/components/SecurityProtectionLayer";
 import {
@@ -12,6 +12,16 @@ const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-poppins",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
 });
 
 export const metadata: Metadata = {
@@ -34,7 +44,10 @@ export default async function RootLayout({
   );
 
   return (
-    <html lang="en" className={poppins.variable}>
+    <html
+      lang="en"
+      className={`${poppins.variable} ${inter.variable} ${playfair.variable}`}
+    >
       <body className="min-h-screen bg-[#FBF7F2] text-black antialiased">
         <SecurityProtectionLayer>
           {children}
